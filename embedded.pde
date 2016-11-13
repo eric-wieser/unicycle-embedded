@@ -19,50 +19,43 @@ int TMR3sign = 1;             // sign of the value in TMR3
 int TMR4sign = 1;             // sign of the value in TMR4
 int phase = 0;                // phase of main loop
 
-float AngleTT = 0.0;          // turn table angular position variable
-float dAngleTT = 0.0;         // turn table angular velocity variable
-
-float AngleW = 0.0;           // wheel angular position variable
-float dAngleW = 0.0;          // wheel angular velocity variable
-
 float dx, dy, dz;             // rate gyro readings [degrees per sec]
-float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
-float roll, pitch, yaw;       // Euler angles of unicycle attitude
-float droll, dpitch, dyaw;    // angular velocities
-
-float dist, x_pos, y_pos;     // distance travelled linearly at a given time step, x-position and y-position
-float xOrigin, yOrigin;       // variables for finding origin
 
 static bool counter = false;   // this Boolean could be controller by a button (to start the experiment)
 static int count = 0;         // variable to keep track of how many measurements have been done
 const int H = 50;             // gives the time horizon or "how many time steps will be measured"
 
 // Storage arrays in same order as in unicycle "doitnlds" file
-float drollArray[H];          // 1   roll angular velocity
-float dyawArray[H];           // 2   yaw angular velocity
-float dAngleWArray[H];        // 3   Wheel angular velocity
-float dpitchArray[H];         // 4   pitch angular velocity
-float dAngleTTArray[H];       // 5   turn table angular velocity
-float xOriginArray[H];        // 6   x position of origin in self centered coord
-float yOriginArray[H];        // 7   y position of origin in self centered coord
-float rollArray[H];           // 8   roll angle
-float yawArray[H];            // 9   yaw angle
-float pitchArray[H];          // 10  pitch angle
-//float dxArray[H];           // 11  x velocity
-//float dyArray[H];           // 12  y velocity
-//float dxOriginArray[H];     // 13  x velocity of origin in self centered coord
-//float dyOriginArray[H];     // 14  y velocity of origin in self centered coord
-float xArray[H];              // 15  x position
-float yArray[H];              // 16  y position
-float AngleWArray[H];         // 17  wheel angle
-float AngleTTArray[H];        // 18  turn table angle
-float TurntableInputArray[H]; // 19  control torque for turntable (here we record what is demanded, not what provided due to duty maximum of 1)
-float WheelInputArray[H];     // 20  control torque for wheel (here we record what is demanded, not what provided due to duty maximum of 1)
+struct LogEntry {
+  float droll;            // 1   roll angular velocity
+  float dyaw;             // 2   yaw angular velocity
+  float dAngleW;          // 3   Wheel angular velocity
+  float dpitch;           // 4   pitch angular velocity
+  float dAngleTT;         // 5   turn table angular velocity
+  float xOrigin;          // 6   x position of origin in self centered coord
+  float yOrigin;          // 7   y position of origin in self centered coord
+  float roll;             // 8   roll angle
+  float yaw;              // 9   yaw angle
+  float pitch;            // 10  pitch angle
+  //float dx;             // 11  x velocity
+  //float dy;             // 12  y velocity
+  //float dxOrigin;       // 13  x velocity of origin in self centered coord
+  //float dyOrigin;       // 14  y velocity of origin in self centered coord
+  float x;                // 15  x position
+  float y;                // 16  y position
+  float AngleW;           // 17  wheel angle
+  float AngleTT;          // 18  turn table angle
+  float TurntableInput;   // 19  control torque for turntable (here we record what is demanded, not what provided due to duty maximum of 1)
+  float WheelInput;       // 20  control torque for wheel (here we record what is demanded, not what provided due to duty maximum of 1)
 
-// We may need the accelerations for calibrating the start measurements
-float ddxArray[H];
-float ddyArray[H];
-float ddzArray[H];
+  // We may need the accelerations for calibrating the start measurements
+  float ddx;
+  float ddy;
+  float ddz;
+};
+
+
+LogEntry logArray[H];
 
 extern "C" {
 
@@ -76,6 +69,20 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
   static short int intAngleW = 0;   // intermediate value of angle for wheel
   short int newAngleW;
   float w[3];                       // storage of the gyro spin values
+
+  float AngleTT = 0.0;          // turn table angular position variable
+  float dAngleTT = 0.0;         // turn table angular velocity variable
+
+  float AngleW = 0.0;           // wheel angular position variable
+  float dAngleW = 0.0;          // wheel angular velocity variable
+
+  float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
+  float roll, pitch, yaw;       // Euler angles of unicycle attitude
+  float droll, dpitch, dyaw;    // angular velocities
+
+  float dist, x_pos, y_pos;     // distance travelled linearly at a given time step, x-position and y-position
+  float xOrigin, yOrigin;       // variables for finding origin
+
 
   mT1ClearIntFlag();
 
@@ -113,7 +120,7 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
     dAngleW = 0.0698 * (newAngleW - intAngleW);
 
     // Try the distance calculations (some drift due to yaw)
-    dist=cw*(((newAngleW - oldAngleW) / 2864.7890)+dpitch*dt)/6.2832; //divided by 2pi=6.2832
+    dist=cw*(((newAngleW - oldAngleW) / 2864.7890)+dpitch*dt)/(2*M_PI);
     oldAngleW = newAngleW;
     x_pos += dist*cos(yaw);
     y_pos += dist*sin(yaw);
@@ -127,32 +134,32 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
     } // recording only over the time horizon
     if (counter) {
       // Data recording starts here!
-      drollArray[count] = droll;         // 1   roll angular velocity
-      dyawArray[count] = dyaw;           // 2   yaw angular velocity
-      dAngleWArray[count] = dAngleW;     // 3   Wheel angular velocity
-      dpitchArray[count] = dpitch;       // 4   pitch angular velocity
-      dAngleTTArray[count] = dAngleTT;   // 5   turn table angular velocity
-      xOriginArray[count] = xOrigin;     // 6   x position of origin in self centered coord
-      yOriginArray[count] = yOrigin;     // 7   y position of origin in self centered coord
-      rollArray[count] = roll;           // 8   roll angle
-      yawArray[count] = yaw;             // 9   yaw angle
-      pitchArray[count] = pitch;         // 10  pitch angle
-      //dxArray[count];                  // 11  x velocity
-      //dyArray[count];                  // 12  y velocity
-      //dxOriginArray[count];            // 13  x velocity of origin in self centered coord
-      //dyOriginArray[count];            // 14  y velocity of origin in self centered coord
-      xArray[count] = x_pos;             // 15  x position
-      yArray[count] = y_pos;             // 16  y position
-      AngleWArray[count] = AngleW;       // 17  wheel angle
-      AngleTTArray[count] = AngleTT;     // 18  turn table angle
-      TurntableInputArray[count] = policyTurntable(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 19  control torque for turntable
-      WheelInputArray[count] = policyWheel(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 20  control torque for wheel
+      logArray[count].droll = droll;         // 1   roll angular velocity
+      logArray[count].dyaw = dyaw;           // 2   yaw angular velocity
+      logArray[count].dAngleW = dAngleW;     // 3   Wheel angular velocity
+      logArray[count].dpitch = dpitch;       // 4   pitch angular velocity
+      logArray[count].dAngleTT = dAngleTT;   // 5   turn table angular velocity
+      logArray[count].xOrigin = xOrigin;     // 6   x position of origin in self centered coord
+      logArray[count].yOrigin = yOrigin;     // 7   y position of origin in self centered coord
+      logArray[count].roll = roll;           // 8   roll angle
+      logArray[count].yaw = yaw;             // 9   yaw angle
+      logArray[count].pitch = pitch;         // 10  pitch angle
+      //logArray[count].dx;                  // 11  x velocity
+      //logArray[count].dy;                  // 12  y velocity
+      //logArray[count].dxOrigin;            // 13  x velocity of origin in self centered coord
+      //logArray[count].dyOrigin;            // 14  y velocity of origin in self centered coord
+      logArray[count].x = x_pos;             // 15  x position
+      logArray[count].y = y_pos;             // 16  y position
+      logArray[count].AngleW = AngleW;       // 17  wheel angle
+      logArray[count].AngleTT = AngleTT;     // 18  turn table angle
+      logArray[count].TurntableInput = policyTurntable(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 19  control torque for turntable
+      logArray[count].WheelInput = policyWheel(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 20  control torque for wheel
       //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
 
       // We may need the accelerations for calibrating the start measurements
-      ddxArray[count] = ddx;
-      ddyArray[count] = ddy;
-      ddzArray[count] = ddz;
+      logArray[count].ddx = ddx;
+      logArray[count].ddy = ddy;
+      logArray[count].ddz = ddz;
 
       count += 1;
     }
@@ -329,8 +336,8 @@ void loop() {
 
   if (counter)
   {
-    setMotorTurntable(PR2, TurntableInputArray[count-1]);    // count-1 because at the end of it doing the maths and then storing the value
-    setMotorWheel(PR2, WheelInputArray[count-1]);            // the counter counts up. Thus the value stored and implemented match
+    setMotorTurntable(PR2, logArray[count-1].TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
+    setMotorWheel(PR2, logArray[count-1].WheelInput);            // the counter counts up. Thus the value stored and implemented match
   }
   else
   {
@@ -346,7 +353,7 @@ void loop() {
 //          mode = Serial.read();
 //          Serial.println('R2');
 //      }
-//      if (mode == 'W') {Serial.println(pitchArray[k],4);}
+//      if (mode == 'W') {Serial.println(logArray[k].pitch,4);}
 //      mode='R';
 //    }
 //  }
@@ -367,115 +374,115 @@ void loop() {
       Serial.println(' ');
       //Serial.print('1');
       for (int k = 0; k < H; k++) {
-        Serial.print(drollArray[k], 4);
+        Serial.print(logArray[k].droll, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('2');
       for (int k = 0; k < H; k++) {
-        Serial.print(dyawArray[k], 4);
+        Serial.print(logArray[k].dyaw, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('3');
       for (int k = 0; k < H; k++) {
-        Serial.print(dAngleWArray[k], 4);
+        Serial.print(logArray[k].dAngleW, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('4');
       for (int k = 0; k < H; k++) {
-        Serial.print(dpitchArray[k], 4);
+        Serial.print(logArray[k].dpitch, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('5');
       for (int k = 0; k < H; k++) {
-        Serial.print(dAngleTTArray[k], 4);
+        Serial.print(logArray[k].dAngleTT, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('6');
       for (int k = 0; k < H; k++) {
-        Serial.print(xOriginArray[k], 4);
+        Serial.print(logArray[k].xOrigin, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('7');
       for (int k = 0; k < H; k++) {
-        Serial.print(yOriginArray[k], 4);
+        Serial.print(logArray[k].yOrigin, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('8');
       for (int k = 0; k < H; k++) {
-        Serial.print(rollArray[k], 4);
+        Serial.print(logArray[k].roll, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('9');
       for (int k = 0; k < H; k++) {
-        Serial.print(yawArray[k], 4);
+        Serial.print(logArray[k].yaw, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('10');
       for (int k = 0; k < H; k++) {
-        Serial.print(pitchArray[k], 4);
+        Serial.print(logArray[k].pitch, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('11');
       for (int k = 0; k < H; k++) {
-        Serial.print(xArray[k], 4);
+        Serial.print(logArray[k].x, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('12');
       for (int k = 0; k < H; k++) {
-        Serial.print(yArray[k], 4);
+        Serial.print(logArray[k].y, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('13');
       for (int k = 0; k < H; k++) {
-        Serial.print(AngleWArray[k], 4);
+        Serial.print(logArray[k].AngleW, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('14');
       for (int k = 0; k < H; k++) {
-        Serial.print(AngleTTArray[k], 4);
+        Serial.print(logArray[k].AngleTT, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('15');
       for (int k = 0; k < H; k++) {
-        Serial.print(TurntableInputArray[k], 4);
+        Serial.print(logArray[k].TurntableInput, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('16');
       for (int k = 0; k < H; k++) {
-        Serial.print(WheelInputArray[k], 4);
+        Serial.print(logArray[k].WheelInput, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('17');
       for (int k = 0; k < H; k++) {
-        Serial.print(ddxArray[k], 4);
+        Serial.print(logArray[k].ddx, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('18');
       for (int k = 0; k < H; k++) {
-        Serial.print(ddyArray[k], 4);
+        Serial.print(logArray[k].ddy, 4);
         Serial.print(',');
       }
       Serial.println(' ');
       //Serial.print('19');
       for (int k = 0; k < H; k++) {
-        Serial.print(ddzArray[k], 4);
+        Serial.print(logArray[k].ddz, 4);
         Serial.print(',');
       }
       Serial.println();
