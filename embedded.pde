@@ -12,8 +12,22 @@
 #include "intAngVel.h"
 
 int mode = 'R';
-const float dt = 0.05;        // time step in seconds
-const float cw = 0.222;       // circumference of the unicycle wheel (measured)
+
+// Kinematic properties   
+const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
+const float BELT_RATIO = 40/16;      // rotor rotations per wheel rotation
+const float GEARBOX_RATIO = 225/16;  // motor rotations per rotor rotation
+const float ENCODER_CPR = 512;       // counts per motor revolution
+
+// counts per radian for the turntable and wheel
+const float TT_CPRAD = ENCODER_CPR * GEARBOX_RATIO / (2*M_PI);
+const float W_CPRAD = ENCODER_CPR * GEARBOX_RATIO * BELT_RATIO / (2*M_PI);
+const float W_RADIUS = WHEEL_CIRC / (2 * M_PI);
+
+// control loop properties
+const float dt = 50e-3;                  // time step in seconds
+const float SPEED_MEASURE_WINDOW = 5e-3; // size of the window used to measure speed
+
 
 int TMR3sign = 1;             // sign of the value in TMR3
 int TMR4sign = 1;             // sign of the value in TMR4
@@ -62,12 +76,13 @@ extern "C" {
 // main timer that keeps track of the 50ms period and perfoms the key funtionality
 void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
 {
-  static short int oldAngleTT = 0;  // old value of angle for turntable
-  static short int intAngleTT = 0;  // intermediate value of angle for turntable
-  short int newAngleTT;
-  static short int oldAngleW = 0;   // old value of angle for wheel
-  static short int intAngleW = 0;   // intermediate value of angle for wheel
-  short int newAngleW;
+  static int16_t oldAngleTT = 0;  // old value of angle for turntable
+  static int16_t intAngleTT = 0;  // intermediate value of angle for turntable
+  int16_t newAngleTT;
+  static int16_t oldAngleW = 0;   // old value of angle for wheel
+  static int16_t intAngleW = 0;   // intermediate value of angle for wheel
+  int16_t newAngleW;
+
   float w[3];                       // storage of the gyro spin values
 
   float AngleTT = 0.0;          // turn table angular position variable
@@ -92,35 +107,31 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
 
   //this 5ms window is used for speed measurement
   if (phase == 0) {
-    WritePeriod1(1563);   // 5 ms (1563*3.2us = 5 ms, where 3.2us is 256/80MHz)
+    PR1 = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
     intAngleTT = TMR3sign * TMR3; // TMR3 and thus AngleTT are to do with the turntable
     intAngleW = TMR4sign * TMR4; // TMR4 and thus AngleW are to do with the wheel
 
     phase = 1;
   } else {
-    WritePeriod1(14062);  // 45 ms (the period is varied between 5ms and 45ms by rewriting the interrupt period)
+    PR1 = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
 
     gyroRead(w[0], w[1], w[2]);
     intAngVel(w, roll, pitch, yaw, droll, dpitch, dyaw); //Here roll pitch and yaw now match x,y,z orientationally
     accelRead(ddx, ddy, ddz);
 
     // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
-    newAngleTT = (short int) TMR3 * TMR3sign;
-    // factor 1145.9156 = 512*225/16/(2*pi): counts/degrees = counts/revolution*[gearing_factor]/(radians/revolution)
-    AngleTT += ((short int) (newAngleTT - oldAngleTT)) / 1145.9156;  // in radians
-    // factor 0.1745 = 200/1145.9156: (counts/5ms*1000ms/s/[1145.9156 counts/radian])
-    dAngleTT = 0.1745 * (newAngleTT - intAngleTT);          // in radians per s
+    newAngleTT = static_cast<int16_t>(TMR3) * TMR3sign;
+    AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
+    dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
     oldAngleTT = newAngleTT;
 
     // Motorwheel angle
-    newAngleW = (short int) TMR4 * TMR4sign;
-    // factor 2864.7890 = 1145.9156*40/16 (40/16 comes from additional gearing on the motor wheel belt)
-    AngleW += ((short int) (newAngleW - oldAngleW)) / 2864.7890;
-    // factor 0.0698 = 0.1745/40*16 (40/16 comes from additional gearing on the motor wheel belt)
-    dAngleW = 0.0698 * (newAngleW - intAngleW);
+    newAngleW = static_cast<int16_t>(TMR4) * TMR4sign;
+    AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
+    dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
 
     // Try the distance calculations (some drift due to yaw)
-    dist=cw*(((newAngleW - oldAngleW) / 2864.7890)+dpitch*dt)/(2*M_PI);
+    dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + dpitch*dt);
     oldAngleW = newAngleW;
     x_pos += dist*cos(yaw);
     y_pos += dist*sin(yaw);
