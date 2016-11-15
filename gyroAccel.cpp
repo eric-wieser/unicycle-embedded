@@ -5,16 +5,38 @@
 
 #include "gyroAccel.h"
 
-// write one data byte to specified accelerometer register
+#include <plib.h>
+#include <ARduino.h>
 
+// write one data byte to a specified register at I2C address
+void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
+{
+  StartI2C1(); IdleI2C1();           // send start condition
+  MasterWriteI2C1(addr); IdleI2C1(); // I2C write address
+  MasterWriteI2C1(reg); IdleI2C1();  // send register
+  MasterWriteI2C1(data); IdleI2C1(); // send data
+  StopI2C1(); IdleI2C1();            // send stop condition
+}
+
+// read length bytes to data array from I2C addr, starting at specified reg
+void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, int length)
+{
+  StartI2C1(); IdleI2C1();               // send start condition
+  MasterWriteI2C1(addr); IdleI2C1();     // I2C write address
+  MasterWriteI2C1(reg); IdleI2C1();      // send start register
+  StartI2C1(); IdleI2C1();               // send start condition
+  MasterWriteI2C1(addr | 1); IdleI2C1(); // I2C read address
+  MastergetsI2C1(length, data, 2000);    // get data
+  IdleI2C1(); StopI2C1(); IdleI2C1();    // send stop condition
+}
+
+// write one data byte to specified accelerometer register
 void accelWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xa6, reg, data);
 }
 
-
 // read the accelerometer and return accel in m/s^2
-
 void accelRead(float &x, float &y, float &z)
 {
   float c = 2048.0 / 9.82;            // conversion factor from 13 bit to m/s^2
@@ -28,18 +50,16 @@ void accelRead(float &x, float &y, float &z)
 }
 
 // write one data byte to specified gyro register
-
 void gyroWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xd0, reg, data);          // gyro is at I2C address 0xd0
 }
 
 // read the rate gyros, and return angular speeds in radians per second
-
 void gyroRead(float &x, float &y, float &z)
 {
   static float x0, y0, z0;                 // offset angular velocities
-  static boolean first = true;
+  static bool first = true;
   float c = 1.0/14.375/57.2958;            // sensor resolution, radians per second
   uint8_t s[6];                      // need 6 bytes
 
@@ -66,32 +86,4 @@ void gyroRead(float &x, float &y, float &z)
   x = (short int) -(256*s[4] + s[5])*c - x0; // assemble short int (16 bit), rescale
   y = (short int) (256*s[0] + s[1])*c - y0;  // to radians per second and return as
   z = (short int) -(256*s[2] + s[3])*c - z0; // floats for each direction
-
-
-}
-
-
-// write one data byte to a specified register at I2C address
-
-void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
-{
-  StartI2C1(); IdleI2C1();           // send start condition
-  MasterWriteI2C1(addr); IdleI2C1(); // I2C write address
-  MasterWriteI2C1(reg); IdleI2C1();  // send register  
-  MasterWriteI2C1(data); IdleI2C1(); // send data 
-  StopI2C1(); IdleI2C1();            // send stop condition
-}  
-
-
-// read length bytes to data array from I2C addr, starting at specified reg
-
-void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, int length)
-{
-  StartI2C1(); IdleI2C1();               // send start condition
-  MasterWriteI2C1(addr); IdleI2C1();     // I2C write address
-  MasterWriteI2C1(reg); IdleI2C1();      // send start register
-  StartI2C1(); IdleI2C1();               // send start condition
-  MasterWriteI2C1(addr | 1); IdleI2C1(); // I2C read address
-  MastergetsI2C1(length, data, 2000);    // get data
-  IdleI2C1(); StopI2C1(); IdleI2C1();    // send stop condition
 }
