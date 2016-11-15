@@ -9,7 +9,7 @@
 #include <ARduino.h>
 
 // write one data byte to a specified register at I2C address
-void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
+static void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
 {
   StartI2C1(); IdleI2C1();           // send start condition
   MasterWriteI2C1(addr); IdleI2C1(); // I2C write address
@@ -19,7 +19,7 @@ void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
 }
 
 // read length bytes to data array from I2C addr, starting at specified reg
-void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, int length)
+static void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
 {
   StartI2C1(); IdleI2C1();               // send start condition
   MasterWriteI2C1(addr); IdleI2C1();     // I2C write address
