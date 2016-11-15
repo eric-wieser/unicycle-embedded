@@ -182,11 +182,12 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
 // the counters need to count down rather than up
 void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
 {
-  auto state = PORTDbits;   // Read state and clear mismatch condition
+  __PORTDbits_t state;
+  state.w = PORTD;   // Read state and clear mismatch condition
   mCNClearIntFlag();        // clear interrupt flag
 
-  int negMotor1 = PORTDbits.RD5 ? -1 : 1;
-  int negMotor2 = PORTDbits.RD6 ? -1 : 1;
+  int negMotor1 = state.RD5 ? -1 : 1;
+  int negMotor2 = state.RD6 ? -1 : 1;
 
   // Serial.print("____________________CN: "); // change notice vector gives information on a change
   // Serial.print(negMotor1);
