@@ -10,7 +10,8 @@
 #include "intAngVel.h"
 #include "quat.h"                      // quaternion library
 
-void intAngVel(float *w, float &phi, float &theta, float &psi,
+void intAngVel(const float *w,
+               float &phi, float &theta, float &psi,
                float &dphi, float &dtheta, float &dpsi)
 {
   static quat q(1, 0, 0, 0); //we first define q as an identity quaternion with no rotation

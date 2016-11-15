@@ -37,7 +37,7 @@ void quat::normalize()
 //   w /= m; x /= m; y /= m; z /= m;
 //}
 
-quat quat::conj() // conjugate unit quaternion
+quat quat::conj() const // conjugate unit quaternion
 {
   return quat(x, -y, -z, -w);
 }
@@ -73,7 +73,7 @@ quat quat::operator* (const quat &q) const
 
 //From p.12
 
-void quat::euler(float &phi, float &theta, float &psi)
+void quat::euler(float &phi, float &theta, float &psi) const
 {
   phi = atan2(2*z*w+2*x*y, w*w-z*z-y*y+x*x);
   theta = -asin(2*y*w-2*x*z);
