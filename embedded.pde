@@ -301,10 +301,11 @@ void setup() {
   accelWrite(0x2c, 0x0b); // measurement rate, 200 Hz
   accelWrite(0x2d, 0x08); // power ctrl, enable measurements
 
-  delay(1500);             // wait for gyro to get ready (setup)
+  // wait for gyro to get ready (setup)
+  delay(1500);             
 
+  // configure the change notice to watch the encoder pins
   mCNOpen(CN_ON | CN_IDLE_CON, CN14_ENABLE | CN15_ENABLE, CN_PULLUP_DISABLE_ALL);
-PORTD: // moved
   ConfigIntCN(CHANGE_INT_ON | CHANGE_INT_PRI_2); //should this be INT_PRIOR_2  ?
 
   // twitch both the turntable and wheel, so that we know things are working
