@@ -7,7 +7,7 @@
 
 // write one data byte to specified accelerometer register
 
-void accelWrite(unsigned char reg, unsigned char data)
+void accelWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xa6, reg, data);
 }
@@ -18,7 +18,7 @@ void accelWrite(unsigned char reg, unsigned char data)
 void accelRead(float &x, float &y, float &z)
 {
   float c = 2048.0 / 9.82;            // conversion factor from 13 bit to m/s^2
-  unsigned char s[6];                 // need 6 bytes
+  uint8_t s[6];                 // need 6 bytes
   I2CRead(0xa6, 0x32, s, 6);          // I2C addr 0xa6 and regs begin at 0x32
 
   x = (short int) -(s[4] + 256*s[5])/c; // assemble short int (16 bit), rescale (0 is LSB, 1 is MSB)
@@ -29,7 +29,7 @@ void accelRead(float &x, float &y, float &z)
 
 // write one data byte to specified gyro register
 
-void gyroWrite(unsigned char reg, unsigned char data)
+void gyroWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xd0, reg, data);          // gyro is at I2C address 0xd0
 }
@@ -41,7 +41,7 @@ void gyroRead(float &x, float &y, float &z)
   static float x0, y0, z0;                 // offset angular velocities
   static boolean first = true;
   float c = 1.0/14.375/57.2958;            // sensor resolution, radians per second
-  unsigned char s[6];                      // need 6 bytes
+  uint8_t s[6];                      // need 6 bytes
 
   if (first) {
     first = false;
@@ -73,7 +73,7 @@ void gyroRead(float &x, float &y, float &z)
 
 // write one data byte to a specified register at I2C address
 
-void I2CWrite(unsigned char addr, unsigned char reg, unsigned char data)
+void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
 {
   StartI2C1(); IdleI2C1();           // send start condition
   MasterWriteI2C1(addr); IdleI2C1(); // I2C write address
@@ -85,7 +85,7 @@ void I2CWrite(unsigned char addr, unsigned char reg, unsigned char data)
 
 // read length bytes to data array from I2C addr, starting at specified reg
 
-void I2CRead(unsigned char addr, unsigned char reg, unsigned char *data, int length)
+void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, int length)
 {
   StartI2C1(); IdleI2C1();               // send start condition
   MasterWriteI2C1(addr); IdleI2C1();     // I2C write address
