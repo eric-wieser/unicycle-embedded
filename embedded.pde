@@ -283,7 +283,6 @@ void setMotorWheel(int period, float cmd) {
 // main function to setup the test
 void setup() {
   Serial.begin(57600);
-//    char a = 'b';
 
   pinMode(13, OUTPUT); // LED pin 13 is digital output
   digitalWrite(13, LOW);
@@ -308,6 +307,8 @@ void setup() {
   mCNOpen(CN_ON | CN_IDLE_CON, CN14_ENABLE | CN15_ENABLE, CN_PULLUP_DISABLE_ALL);
 PORTD: // moved
   ConfigIntCN(CHANGE_INT_ON | CHANGE_INT_PRI_2); //should this be INT_PRIOR_2  ?
+
+  // twitch both the turntable and wheel, so that we know things are working
   setMotorTurntable(PR2, -0.1);
   setMotorWheel(PR2, -0.1);
   delay(100);
@@ -317,22 +318,21 @@ PORTD: // moved
   setMotorTurntable(PR2, 0);
   setMotorWheel(PR2, 0);
   delay(100);
+
+  // start the encoder timers
   OpenTimer3(T3_ON | T3_PS_1_1 | T3_SOURCE_EXT, 0xffff); // T3 external source is the pulse from the turntable
-  WriteTimer3(0);
+  TMR3 = 0;
   OpenTimer4(T4_ON | T3_PS_1_1 | T4_SOURCE_EXT, 0xffff); // T4 external source is the pulse from the wheel
-  WriteTimer4(0);
+  TMR4 = 0;
+
   delay(2000);
   gyroRead(dx, dy, dz);
   digitalWrite(13, HIGH);   // set the LED on
 
-//    Serial.println('a');
-//    while (a != 'a')
-//    {
-//      a = Serial.read();
-//    }
 
+  // start the control loop timer
   OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, 0xffff);
-  WriteTimer1(0);
+  TMR1 = 0;
   ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
 
   INTEnableSystemMultiVectoredInt(); // setup for multi-vectored interrupts
