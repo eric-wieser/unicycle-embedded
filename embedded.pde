@@ -254,11 +254,10 @@ void __ISR(_TIMER_2_VECTOR, ipl7) T2_IntHandler (void) {
 // setup functions and main loop below
 
 // function definitions for setting the motor duty cycle
-void setMotorTurntable(int period, float cmd) {
-  int duty;
-  duty = round(period * abs(cmd));
+// note that the timers count only to 0xffff, despite the OC being 32 bits
+void setMotorTurntable(float cmd) {
+  uint32_t duty = round(PR2 * abs(cmd));
 
-  // if cmd too small or large it will be set to minimum or maximum
   if(cmd < 0) {
     OC1RS = 0x0000;
     OC2RS = duty;
@@ -268,9 +267,8 @@ void setMotorTurntable(int period, float cmd) {
   }
 }
 
-void setMotorWheel(int period, float cmd) {
-  int duty;
-  duty = round(period * abs(cmd));
+void setMotorWheel(float cmd) {
+  uint32_t duty = round(PR2 * abs(cmd));
 
   if(cmd < 0) {
     OC3RS = 0x0000;
@@ -291,8 +289,8 @@ void setup() {
   //srand(54321);
 
   setupPWM();
-  setMotorTurntable(PR2, 0);
-  setMotorWheel(PR2, 0);
+  setMotorTurntable(0);
+  setMotorWheel(0);
 
   OpenI2C1(I2C_EN, 0x062); // I2C at 400 KHz
 
@@ -310,14 +308,14 @@ PORTD: // moved
   ConfigIntCN(CHANGE_INT_ON | CHANGE_INT_PRI_2); //should this be INT_PRIOR_2  ?
 
   // twitch both the turntable and wheel, so that we know things are working
-  setMotorTurntable(PR2, -0.1);
-  setMotorWheel(PR2, -0.1);
+  setMotorTurntable(-0.1);
+  setMotorWheel(-0.1);
   delay(100);
-  setMotorTurntable(PR2, 0.1);
-  setMotorWheel(PR2, 0.1);
+  setMotorTurntable(0.1);
+  setMotorWheel(0.1);
   delay(100);
-  setMotorTurntable(PR2, 0);
-  setMotorWheel(PR2, 0);
+  setMotorTurntable(0);
+  setMotorWheel(0);
   delay(100);
 
   // start the encoder timers
@@ -360,13 +358,13 @@ void loop() {
 
   if (counter)
   {
-    setMotorTurntable(PR2, logArray[count-1].TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
-    setMotorWheel(PR2, logArray[count-1].WheelInput);            // the counter counts up. Thus the value stored and implemented match
+    setMotorTurntable(logArray[count-1].TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
+    setMotorWheel(logArray[count-1].WheelInput);            // the counter counts up. Thus the value stored and implemented match
   }
   else
   {
-    setMotorTurntable(PR2, 0);
-    setMotorWheel(PR2, 0);
+    setMotorTurntable(0);
+    setMotorWheel(0);
   }
 
 //  if (counter == false) {
