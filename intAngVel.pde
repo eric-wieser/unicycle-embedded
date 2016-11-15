@@ -9,7 +9,6 @@
 
 #include "intAngVel.h"
 #include "quat.h"                      // quaternion library
-extern const float dt;                 // time step in seconds
 
 void intAngVel(float *w, float &phi, float &theta, float &psi,
                float &dphi, float &dtheta, float &dpsi)
