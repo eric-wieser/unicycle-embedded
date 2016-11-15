@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 void accelWrite(uint8_t, uint8_t);
