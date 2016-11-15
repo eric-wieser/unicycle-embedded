@@ -328,6 +328,18 @@ PORTD: // moved
 
 }
 
+void printField(float LogEntry::* field, const char* name, bool debug) {
+  if(debug) {
+    Serial.print(name);
+    Serial.print(": ");
+  }
+  for (int k = 0; k < H; k++) {
+    Serial.print(logArray[k].*field, 4);
+    Serial.print(',');
+  }
+  Serial.println("");
+}
+
 void loop() {
 
   // This part is for testing purposes
@@ -367,126 +379,46 @@ void loop() {
   // This makes sure we only show these after we've done the measurements
   if (Serial.available() > 0) {
     mode = Serial.read();
+    bool sendSomething = false;
+    bool sendDebug = false;
     if (mode == 'W') {
+      sendSomething = true;
+    }
+    else if (mode == 'w') {
+      sendSomething = true;
+      sendDebug = true;
+    }
+
+    if(sendSomething) {
       Serial.println(dx, 4);
       Serial.println(dy, 4);
       Serial.println(dz, 4);
       Serial.println(' ');
-      //Serial.print('1');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].droll, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('2');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].dyaw, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('3');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].dAngleW, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('4');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].dpitch, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('5');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].dAngleTT, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('6');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].xOrigin, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('7');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].yOrigin, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('8');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].roll, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('9');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].yaw, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('10');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].pitch, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('11');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].x, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('12');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].y, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('13');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].AngleW, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('14');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].AngleTT, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('15');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].TurntableInput, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('16');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].WheelInput, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('17');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].ddx, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('18');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].ddy, 4);
-        Serial.print(',');
-      }
-      Serial.println(' ');
-      //Serial.print('19');
-      for (int k = 0; k < H; k++) {
-        Serial.print(logArray[k].ddz, 4);
-        Serial.print(',');
-      }
-      Serial.println();
+
+      #define PRINT_FIELD(name) printField(&LogEntry:: name, #name, sendDebug)
+        PRINT_FIELD(droll);
+        PRINT_FIELD(dyaw);
+        PRINT_FIELD(dAngleW);
+        PRINT_FIELD(dpitch);
+        PRINT_FIELD(dAngleTT);
+        PRINT_FIELD(xOrigin);
+        PRINT_FIELD(yOrigin);
+        PRINT_FIELD(roll);
+        PRINT_FIELD(yaw);
+        PRINT_FIELD(pitch);
+        PRINT_FIELD(x);
+        PRINT_FIELD(y);
+        PRINT_FIELD(AngleW);
+        PRINT_FIELD(AngleTT);
+        PRINT_FIELD(TurntableInput);
+        PRINT_FIELD(WheelInput);
+        PRINT_FIELD(ddx);
+        PRINT_FIELD(ddy);
+        PRINT_FIELD(ddz);
+      #undef PRINT_FIELD
+
       mode = 'R';
     }
   }
 }
+
