@@ -13,7 +13,7 @@
 
 int mode = 'R';
 
-// Kinematic properties   
+// Kinematic properties
 const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
 const float BELT_RATIO = 40/16;      // rotor rotations per wheel rotation
 const float GEARBOX_RATIO = 225/16;  // motor rotations per rotor rotation
@@ -78,6 +78,13 @@ p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
 p32_timer& tmr2 = *reinterpret_cast<p32_timer*>(_TMR2_BASE_ADDRESS);
 p32_timer& tmr3 = *reinterpret_cast<p32_timer*>(_TMR3_BASE_ADDRESS);
 p32_timer& tmr4 = *reinterpret_cast<p32_timer*>(_TMR4_BASE_ADDRESS);
+
+
+//output compare
+p32_oc& oc1 = *reinterpret_cast<p32_oc*>(_OCMP1_BASE_ADDRESS);
+p32_oc& oc2 = *reinterpret_cast<p32_oc*>(_OCMP2_BASE_ADDRESS);
+p32_oc& oc3 = *reinterpret_cast<p32_oc*>(_OCMP3_BASE_ADDRESS);
+p32_oc& oc4 = *reinterpret_cast<p32_oc*>(_OCMP4_BASE_ADDRESS);
 
 extern "C" {
 
@@ -214,27 +221,22 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
 void setupPWM() {
   INTEnableSystemMultiVectoredInt();// Enable system wide interrupt to multivectored mode.
 
-  OC1CON = 0x0000;      // Turn off the OC1 when performing the setup
-  OC1R = 0x0000;        // Initialize primary Compare register
-  OC1RS = 0x0000;       // Initialize secondary Compare register
-  OC1CON = 0x0006;      // Configure for PWM mode without Fault pin enabled
+  p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
 
-  OC2CON = 0x0000;      // Turn off the OC2 when performing the setup
-  OC2R = 0x0000;        // Initialize primary Compare register
-  OC2RS = 0x0000;       // Initialize secondary Compare register
-  OC2CON = 0x0006;      // Configure for PWM mode without Fault pin enabled
+  for(int i = 0; i < 4; i++) {
+    // Turn off the OC when performing the setup
+    ocs[i]->ocxCon.reg = 0;
 
-  OC3CON = 0x0000;      // Turn off the OC3 when performing the setup
-  OC3R = 0x0000;        // Initialize primary Compare register
-  OC3RS = 0x0000;       // Initialize secondary Compare register
-  OC3CON = 0x0006;      // Configure for PWM mode without Fault pin enabled
+    // Set the primary and secondary compare registers
+    ocs[i]->ocxR.reg   = 0x0000;
+    ocs[i]->ocxRs.reg  = 0x0000;
 
-  OC4CON = 0x0000;      // Turn off the OC4 when performing the setup
-  OC4R = 0x0000;        // Initialize primary Compare register
-  OC4RS = 0x0000;       // Initialize secondary Compare register
-  OC4CON = 0x0006;      // Configure for PWM mode without Fault pin enabled
+    // configure for PWM mode
+    ocs[i]->ocxCon.reg = OCCON_SRC_TIMER2 | OCCON_PWM_FAULT_DISABLE;
+  }
 
-  tmr2.tmxPr.reg = 0xFFFF;         // Set period
+  // Set period of corresponding timer
+  tmr2.tmxPr.reg = 0xFFFF;
 
   // Configure Timer2 interrupt. Note that in PWM mode, the
   // corresponding source timer interrupt flag is asserted.
@@ -244,10 +246,11 @@ void setupPWM() {
   setIntEnable(_TIMER_2_IRQ);
 
   tmr2.tmxCon.set = TBCON_ON; // enable TMR2
-  OC1CONSET = 0x8000;   // Enable OC1
-  OC2CONSET = 0x8000;   // Enable OC2
-  OC3CONSET = 0x8000;   // Enable OC3
-  OC4CONSET = 0x8000;   // Enable OC4
+
+  // Enable output compares
+  for(int i = 0; i < 4; i++) {
+    ocs[i]->ocxCon.set = OCCON_ON;
+  }
 }
 
 // Example code for Timer2 ISR
@@ -266,11 +269,11 @@ void setMotorTurntable(float cmd) {
   uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
 
   if(cmd < 0) {
-    OC1RS = 0x0000;
-    OC2RS = duty;
+    oc1.ocxRs.reg = 0x0000;
+    oc2.ocxRs.reg = duty;
   } else {
-    OC1RS = duty;
-    OC2RS = 0x0000;
+    oc1.ocxRs.reg = duty;
+    oc2.ocxRs.reg = 0x0000;
   }
 }
 
@@ -278,11 +281,11 @@ void setMotorWheel(float cmd) {
   uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
 
   if(cmd < 0) {
-    OC3RS = 0x0000;
-    OC4RS = duty;
+    oc3.ocxRs.reg = 0x0000;
+    oc4.ocxRs.reg = duty;
   } else {
-    OC3RS = duty;
-    OC4RS = 0x0000;
+    oc3.ocxRs.reg = duty;
+    oc4.ocxRs.reg = 0x0000;
   }
 }
 
