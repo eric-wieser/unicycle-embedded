@@ -35,13 +35,16 @@ void accelWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xa6, reg, data);
 }
+void accelRead(uint8_t reg, uint8_t *data, size_t length) {
+  I2CRead(0xa6, reg, data, length);
+}
 
 // read the accelerometer and return accel in m/s^2
 void accelRead(float &x, float &y, float &z)
 {
   float c = 2048.0 / 9.82;            // conversion factor from 13 bit to m/s^2
   uint8_t s[6];                 // need 6 bytes
-  I2CRead(0xa6, 0x32, s, 6);          // I2C addr 0xa6 and regs begin at 0x32
+  accelRead(0x32, s, 6);          // I2C addr 0xa6 and regs begin at 0x32
 
   x = (short int) -(s[4] + 256*s[5])/c; // assemble short int (16 bit), rescale (0 is LSB, 1 is MSB)
   y = (short int) (s[0] + 256*s[1])/c;  // to meters per second squared and
@@ -54,6 +57,10 @@ void gyroWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xd0, reg, data);          // gyro is at I2C address 0xd0
 }
+void gyroRead(uint8_t reg, uint8_t *data, size_t length) {
+  I2CRead(0xd0, reg, data, length);
+}
+
 
 // read the rate gyros, and return angular speeds in radians per second
 void gyroRead(float &x, float &y, float &z)
@@ -66,7 +73,7 @@ void gyroRead(float &x, float &y, float &z)
   if (first) {
     first = false;
     for (int i = 0; i < 20; i++) {
-      I2CRead(0xd0, 0x1d, s, 6);            // I2C addr 0xd0 and regs begin at 0x1d
+      gyroRead(0x1d, s, 6);            // I2C addr 0xd0 and regs begin at 0x1d
 
       x0 += (short int) -(256*s[4] + s[5])*c; // assemble short int (16 bit), rescale (0 is MSB, 1 is LSB)
       y0 += (short int) (256*s[0] + s[1])*c;  // to radians per second and return as
