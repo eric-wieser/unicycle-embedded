@@ -98,8 +98,7 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
   float dist, x_pos, y_pos;     // distance travelled linearly at a given time step, x-position and y-position
   float xOrigin, yOrigin;       // variables for finding origin
 
-
-  mT1ClearIntFlag();
+  clearIntFlag(_TIMER_1_IRQ);
 
   if (count == 0) {
     counter = true;
@@ -184,7 +183,7 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
 {
   __PORTDbits_t state;
   state.w = PORTD;   // Read state and clear mismatch condition
-  mCNClearIntFlag();        // clear interrupt flag
+  clearIntFlag(_CHANGE_NOTICE_IRQ);
 
   int negMotor1 = state.RD5 ? -1 : 1;
   int negMotor2 = state.RD6 ? -1 : 1;
@@ -246,7 +245,7 @@ void setupPWM() {
 // Example code for Timer2 ISR
 void __ISR(_TIMER_2_VECTOR, ipl7) T2_IntHandler (void) {
   // The timer 2 is currently not in use (doesn't do anything)
-  IFS0CLR = 0x0100;// Clearing Timer2 interrupt flag
+  clearIntFlag(_TIMER_2_IRQ);
 }
 
 } // end extern C
