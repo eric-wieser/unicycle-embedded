@@ -306,7 +306,7 @@ void setup() {
   setMotorTurntable(0);
   setMotorWheel(0);
 
-  OpenI2C1(I2C_EN, 0x062); // I2C at 400 KHz
+  gyroAccelSetup();
 
   gyroWrite(0x3e, 0x80);  // Reset to defaults
   gyroWrite(0x16, 0x19);  // DLPF_CFG = 1 (188 Hz LP), FS_SEL = 3

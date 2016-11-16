@@ -30,6 +30,11 @@ static void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
   IdleI2C1(); StopI2C1(); IdleI2C1();    // send stop condition
 }
 
+void gyroAccelSetup()
+{
+  OpenI2C1(I2C_EN, 0x062); // I2C at 400 KHz
+}
+
 // write one data byte to specified accelerometer register
 void accelWrite(uint8_t reg, uint8_t data)
 {
