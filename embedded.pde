@@ -5,12 +5,12 @@
 // Carl Edward Rasmussen
 // Aleksi Tukiainen, 2016-05-20
 
-#include <plib.h>
 #include <math.h>
 #include "policy.h"
 #include "gyroAccel.h"
 #include "intAngVel.h"
 #include "p32_defs_patch.h"
+#include <sys/attribs.h>   // ISR macros
 
 int mode = 'R';
 
@@ -223,7 +223,6 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
 }
 
 void setupPWM() {
-  INTEnableSystemMultiVectoredInt();// Enable system wide interrupt to multivectored mode.
 
   p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
 
@@ -368,7 +367,6 @@ void setup() {
   setIntPriority(_TIMER_1_IRQ, 2, 0);
   setIntEnable(_TIMER_1_IRQ);
 
-  INTEnableSystemMultiVectoredInt(); // setup for multi-vectored interrupts
 
 }
 

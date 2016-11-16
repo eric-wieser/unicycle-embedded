@@ -4,8 +4,10 @@
 // Aleksi Tukiainen, 2016-05-20
 
 #include "gyroAccel.h"
+#include "i2cpatch.h"
 
-#include <plib.h>
+using namespace i2c_patch;
+
 #include <ARduino.h>
 
 // write one data byte to a specified register at I2C address
@@ -27,7 +29,8 @@ static void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
   StartI2C1(); IdleI2C1();               // send start condition
   MasterWriteI2C1(addr | 1); IdleI2C1(); // I2C read address
   MastergetsI2C1(length, data, 2000);    // get data
-  IdleI2C1(); StopI2C1(); IdleI2C1();    // send stop condition
+  IdleI2C1();
+  StopI2C1(); IdleI2C1();    // send stop condition
 }
 
 void gyroAccelSetup()
