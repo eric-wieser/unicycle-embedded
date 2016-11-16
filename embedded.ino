@@ -30,6 +30,10 @@ const float dt = 50e-3;                  // time step in seconds
 const float SPEED_MEASURE_WINDOW = 5e-3; // size of the window used to measure speed
 
 
+// pin definitions
+const uint8_t TT_DIR_PIN = 39;
+const uint8_t W_DIR_PIN = 47;
+
 int TMR3sign = 1;             // sign of the value in TMR3
 int TMR4sign = 1;             // sign of the value in TMR4
 int phase = 0;                // phase of main loop
@@ -200,26 +204,38 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
 // the counters need to count down rather than up
 void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
 {
-  __PORTDbits_t state;
-  state.w = PORTD;   // Read state and clear mismatch condition
+  // convert pin numbers to ports - should be optimized out
+  const uint8_t w_port = digitalPinToPort(W_DIR_PIN);
+  const uint8_t w_mask = digitalPinToBitMask(W_DIR_PIN);
+  const uint8_t tt_port = digitalPinToPort(TT_DIR_PIN);
+  const uint8_t tt_mask = digitalPinToBitMask(TT_DIR_PIN);
+
+  // timing is everything, so do just one read if possible
+  bool wNeg, ttNeg;
+  if(w_port == tt_port) {
+    const uint8_t reading = portRegisters(w_port)->port.reg;
+    wNeg = reading & w_mask;
+    ttNeg = reading & tt_mask;
+  }
+  else {
+    wNeg = portRegisters(w_port)->port.reg & w_mask;
+    ttNeg = portRegisters(tt_mask)->port.reg & tt_mask;
+  }
+
   clearIntFlag(_CHANGE_NOTICE_IRQ);
 
-  int negMotor1 = state.RD5 ? -1 : 1;
-  int negMotor2 = state.RD6 ? -1 : 1;
+  const int ttSign = ttNeg ? -1 : 1;
+  const int wSign  = wNeg ? -1 : 1;
 
-  // Serial.print("____________________CN: "); // change notice vector gives information on a change
-  // Serial.print(negMotor1);
-  // Serial.println(negMotor2);
-
-  if (TMR3sign != negMotor1) { // negMotor1 is the turntable motor
-    tmr3.tmxTmr.reg = (short int) -tmr3.tmxTmr.reg; // negate counter
+  if (TMR3sign != ttSign) {
+    tmr3.tmxTmr.reg = (short int) -tmr3.tmxTmr.reg;
   }
-  TMR3sign = negMotor1;      // keep track of sign
+  TMR3sign = ttSign;
 
-  if (TMR4sign != negMotor2) { //negMotor2 is the wheel motor
+  if (TMR4sign != wSign) {
     tmr4.tmxTmr.reg = (short int) -tmr4.tmxTmr.reg;
   }
-  TMR4sign = negMotor2;
+  TMR4sign = wSign;
 }
 
 void setupPWM() {
@@ -320,7 +336,7 @@ void setup() {
   // configure the change notice to watch the encoder pins
   cn.cnCon.clr = 0xFFFF;
   cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
-  cn.cnEn.reg = (1 << 14) | (1 << 15);  // TODO: digitalPinToCN
+  cn.cnEn.reg = digitalPinToCN(TT_DIR_PIN) | digitalPinToCN(W_DIR_PIN);
   cn.cnPue.reg = 0;
 
   clearIntFlag(_CHANGE_NOTICE_IRQ);
