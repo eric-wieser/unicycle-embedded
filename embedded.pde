@@ -10,6 +10,7 @@
 #include "policy.h"
 #include "gyroAccel.h"
 #include "intAngVel.h"
+#include "p32_defs_patch.h"
 
 int mode = 'R';
 
@@ -85,6 +86,9 @@ p32_oc& oc1 = *reinterpret_cast<p32_oc*>(_OCMP1_BASE_ADDRESS);
 p32_oc& oc2 = *reinterpret_cast<p32_oc*>(_OCMP2_BASE_ADDRESS);
 p32_oc& oc3 = *reinterpret_cast<p32_oc*>(_OCMP3_BASE_ADDRESS);
 p32_oc& oc4 = *reinterpret_cast<p32_oc*>(_OCMP4_BASE_ADDRESS);
+
+//change notifier
+p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
 
 extern "C" {
 
@@ -315,7 +319,11 @@ void setup() {
   delay(1500);
 
   // configure the change notice to watch the encoder pins
-  mCNOpen(CN_ON | CN_IDLE_CON, CN14_ENABLE | CN15_ENABLE, CN_PULLUP_DISABLE_ALL);
+  cn.cnCon.clr = 0xFFFF;
+  cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
+  cn.cnEn.reg = (1 << 14) | (1 << 15);  // TODO: digitalPinToCN
+  cn.cnPue.reg = 0;
+
   clearIntFlag(_CHANGE_NOTICE_IRQ);
   setIntPriority(_CHANGE_NOTICE_IRQ, 2, 0); //should this be priority 2?
   setIntEnable(_CHANGE_NOTICE_IRQ);
