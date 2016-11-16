@@ -301,11 +301,14 @@ void setup() {
   accelWrite(0x2d, 0x08); // power ctrl, enable measurements
 
   // wait for gyro to get ready (setup)
-  delay(1500);             
+  delay(1500);
 
   // configure the change notice to watch the encoder pins
   mCNOpen(CN_ON | CN_IDLE_CON, CN14_ENABLE | CN15_ENABLE, CN_PULLUP_DISABLE_ALL);
-  ConfigIntCN(CHANGE_INT_ON | CHANGE_INT_PRI_2); //should this be INT_PRIOR_2  ?
+  clearIntFlag(_CHANGE_NOTICE_IRQ);
+  setIntPriority(_CHANGE_NOTICE_IRQ, 2, 0); //should this be priority 2?
+  setIntEnable(_CHANGE_NOTICE_IRQ);
+
 
   // twitch both the turntable and wheel, so that we know things are working
   setMotorTurntable(-0.1);
@@ -332,7 +335,9 @@ void setup() {
   // start the control loop timer
   OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, 0xffff);
   TMR1 = 0;
-  ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
+  clearIntFlag(_TIMER_1_IRQ);
+  setIntPriority(_TIMER_1_IRQ, 2, 0);
+  setIntEnable(_TIMER_1_IRQ);
 
   INTEnableSystemMultiVectoredInt(); // setup for multi-vectored interrupts
 
