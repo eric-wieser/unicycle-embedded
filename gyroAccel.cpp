@@ -4,38 +4,41 @@
 // Aleksi Tukiainen, 2016-05-20
 
 #include "gyroAccel.h"
-#include "i2cpatch.h"
+#include "i2c_funcs.h"
 
-using namespace i2c_patch;
+#include <Arduino.h>
 
-#include <ARduino.h>
+using namespace i2c_funcs;
+
+// use I2C1
+static p32_i2c& i2c1 = *reinterpret_cast<p32_i2c*>(_I2C1_BASE_ADDRESS);
 
 // write one data byte to a specified register at I2C address
 static void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
 {
-  StartI2C1(); IdleI2C1();           // send start condition
-  MasterWriteI2C1(addr); IdleI2C1(); // I2C write address
-  MasterWriteI2C1(reg); IdleI2C1();  // send register
-  MasterWriteI2C1(data); IdleI2C1(); // send data
-  StopI2C1(); IdleI2C1();            // send stop condition
+  StartI2C(i2c1); IdleI2C(i2c1);             // send start condition
+  MasterWriteI2C(i2c1, addr); IdleI2C(i2c1); // I2C write address
+  MasterWriteI2C(i2c1, reg); IdleI2C(i2c1);  // send register
+  MasterWriteI2C(i2c1, data); IdleI2C(i2c1); // send data
+  StopI2C(i2c1); IdleI2C(i2c1);              // send stop condition
 }
 
 // read length bytes to data array from I2C addr, starting at specified reg
 static void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
 {
-  StartI2C1(); IdleI2C1();               // send start condition
-  MasterWriteI2C1(addr); IdleI2C1();     // I2C write address
-  MasterWriteI2C1(reg); IdleI2C1();      // send start register
-  StartI2C1(); IdleI2C1();               // send start condition
-  MasterWriteI2C1(addr | 1); IdleI2C1(); // I2C read address
-  MastergetsI2C1(length, data, 2000);    // get data
-  IdleI2C1();
-  StopI2C1(); IdleI2C1();    // send stop condition
+  StartI2C(i2c1); IdleI2C(i2c1);                 // send start condition
+  MasterWriteI2C(i2c1, addr); IdleI2C(i2c1);     // I2C write address
+  MasterWriteI2C(i2c1, reg); IdleI2C(i2c1);      // send start register
+  StartI2C(i2c1); IdleI2C(i2c1);                 // send start condition
+  MasterWriteI2C(i2c1, addr | 1); IdleI2C(i2c1); // I2C read address
+  MastergetsI2C(i2c1, length, data, 2000);       // get data
+  IdleI2C(i2c1);
+  StopI2C(i2c1); IdleI2C(i2c1);    // send stop condition
 }
 
 void gyroAccelSetup()
 {
-  OpenI2C1(I2C_EN, 0x062); // I2C at 400 KHz
+  OpenI2C(i2c1, I2C_EN, 0x062); // 400 KHz
 }
 
 // write one data byte to specified accelerometer register
@@ -43,7 +46,8 @@ void accelWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xa6, reg, data);
 }
-void accelRead(uint8_t reg, uint8_t *data, size_t length) {
+void accelRead(uint8_t reg, uint8_t *data, size_t length)
+{
   I2CRead(0xa6, reg, data, length);
 }
 
@@ -65,7 +69,8 @@ void gyroWrite(uint8_t reg, uint8_t data)
 {
   I2CWrite(0xd0, reg, data);          // gyro is at I2C address 0xd0
 }
-void gyroRead(uint8_t reg, uint8_t *data, size_t length) {
+void gyroRead(uint8_t reg, uint8_t *data, size_t length)
+{
   I2CRead(0xd0, reg, data, length);
 }
 
