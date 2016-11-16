@@ -71,6 +71,14 @@ struct LogEntry {
 
 LogEntry logArray[H];
 
+// Type A timer
+p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
+
+// Type B timers
+p32_timer& tmr2 = *reinterpret_cast<p32_timer*>(_TMR2_BASE_ADDRESS);
+p32_timer& tmr3 = *reinterpret_cast<p32_timer*>(_TMR3_BASE_ADDRESS);
+p32_timer& tmr4 = *reinterpret_cast<p32_timer*>(_TMR4_BASE_ADDRESS);
+
 extern "C" {
 
 // main timer that keeps track of the 50ms period and perfoms the key funtionality
@@ -106,26 +114,26 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
 
   //this 5ms window is used for speed measurement
   if (phase == 0) {
-    PR1 = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
-    intAngleTT = TMR3sign * TMR3; // TMR3 and thus AngleTT are to do with the turntable
-    intAngleW = TMR4sign * TMR4; // TMR4 and thus AngleW are to do with the wheel
+    tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
+    intAngleTT = TMR3sign * tmr3.tmxTmr.reg; // TMR3 and thus AngleTT are to do with the turntable
+    intAngleW = TMR4sign * tmr4.tmxTmr.reg; // TMR4 and thus AngleW are to do with the wheel
 
     phase = 1;
   } else {
-    PR1 = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
+    tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
 
     gyroRead(w[0], w[1], w[2]);
     intAngVel(w, roll, pitch, yaw, droll, dpitch, dyaw); //Here roll pitch and yaw now match x,y,z orientationally
     accelRead(ddx, ddy, ddz);
 
     // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
-    newAngleTT = static_cast<int16_t>(TMR3) * TMR3sign;
+    newAngleTT = static_cast<int16_t>(tmr3.tmxTmr.reg) * TMR3sign;
     AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
     dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
     oldAngleTT = newAngleTT;
 
     // Motorwheel angle
-    newAngleW = static_cast<int16_t>(TMR4) * TMR4sign;
+    newAngleW = static_cast<int16_t>(tmr4.tmxTmr.reg) * TMR4sign;
     AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
     dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
 
@@ -193,12 +201,12 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
   // Serial.println(negMotor2);
 
   if (TMR3sign != negMotor1) { // negMotor1 is the turntable motor
-    TMR3 = (short int) -TMR3; // negate counter
+    tmr3.tmxTmr.reg = (short int) -tmr3.tmxTmr.reg; // negate counter
   }
   TMR3sign = negMotor1;      // keep track of sign
 
   if (TMR4sign != negMotor2) { //negMotor2 is the wheel motor
-    TMR4 = (short int) -TMR4;
+    tmr4.tmxTmr.reg = (short int) -tmr4.tmxTmr.reg;
   }
   TMR4sign = negMotor2;
 }
@@ -226,16 +234,16 @@ void setupPWM() {
   OC4RS = 0x0000;       // Initialize secondary Compare register
   OC4CON = 0x0006;      // Configure for PWM mode without Fault pin enabled
 
-  PR2 = 0xFFFF;         // Set period
+  tmr2.tmxPr.reg = 0xFFFF;         // Set period
 
   // Configure Timer2 interrupt. Note that in PWM mode, the
   // corresponding source timer interrupt flag is asserted.
   // OC interrupt is not generated in PWM mode.
+  clearIntFlag(_TIMER_2_IRQ);
+  setIntPriority(_TIMER_2_IRQ, 7, 0);
+  setIntEnable(_TIMER_2_IRQ);
 
-  IFS0CLR = 0x00000100; // Clear the T2 interrupt flag
-  IEC0SET = 0x00000100; // Enable T2 interrupt
-  IPC2SET = 0x0000001C; // Set T2 interrupt priority to 7
-  T2CONSET = 0x8000;    // Enable Timer2
+  tmr2.tmxCon.set = TBCON_ON; // enable TMR2
   OC1CONSET = 0x8000;   // Enable OC1
   OC2CONSET = 0x8000;   // Enable OC2
   OC3CONSET = 0x8000;   // Enable OC3
@@ -255,7 +263,7 @@ void __ISR(_TIMER_2_VECTOR, ipl7) T2_IntHandler (void) {
 // function definitions for setting the motor duty cycle
 // note that the timers count only to 0xffff, despite the OC being 32 bits
 void setMotorTurntable(float cmd) {
-  uint32_t duty = round(PR2 * abs(cmd));
+  uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
 
   if(cmd < 0) {
     OC1RS = 0x0000;
@@ -267,7 +275,7 @@ void setMotorTurntable(float cmd) {
 }
 
 void setMotorWheel(float cmd) {
-  uint32_t duty = round(PR2 * abs(cmd));
+  uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
 
   if(cmd < 0) {
     OC3RS = 0x0000;
@@ -322,19 +330,29 @@ void setup() {
   delay(100);
 
   // start the encoder timers
-  OpenTimer3(T3_ON | T3_PS_1_1 | T3_SOURCE_EXT, 0xffff); // T3 external source is the pulse from the turntable
-  TMR3 = 0;
-  OpenTimer4(T4_ON | T3_PS_1_1 | T4_SOURCE_EXT, 0xffff); // T4 external source is the pulse from the wheel
-  TMR4 = 0;
+  // T3 external source is the pulse from the turntable
+  tmr3.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
+  tmr3.tmxTmr.reg = 0;
+  tmr3.tmxPr.reg = 0xffff;
+  tmr3.tmxCon.set = TBCON_ON;
+
+  // T4 external source is the pulse from the wheel
+  tmr4.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
+  tmr4.tmxTmr.reg = 0;
+  tmr4.tmxPr.reg = 0xffff;
+  tmr4.tmxCon.set = TBCON_ON;
 
   delay(2000);
   gyroRead(dx, dy, dz);
   digitalWrite(13, HIGH);   // set the LED on
 
-
   // start the control loop timer
-  OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, 0xffff);
-  TMR1 = 0;
+  tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
+  tmr1.tmxTmr.reg = 0;
+  tmr1.tmxPr.reg = 0xffff;
+  tmr1.tmxCon.set = TACON_ON;
+
+  // set up interrupts on the control loop timer
   clearIntFlag(_TIMER_1_IRQ);
   setIntPriority(_TIMER_1_IRQ, 2, 0);
   setIntEnable(_TIMER_1_IRQ);
