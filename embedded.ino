@@ -159,7 +159,7 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
     phase = 0;
     if (count >= H) {
       counter = false;
-      digitalWrite(13, LOW);
+      digitalWrite(PIN_LED1, LOW);
     } // recording only over the time horizon
     if (counter) {
       // Data recording starts here!
@@ -296,8 +296,8 @@ void setMotorWheel(float cmd) {
 void setup() {
   Serial.begin(57600);
 
-  pinMode(13, OUTPUT); // LED pin 13 is digital output
-  digitalWrite(13, LOW);
+  pinMode(PIN_LED1, OUTPUT);
+  digitalWrite(PIN_LED1, LOW);
 
   //srand(54321);
 
@@ -354,7 +354,7 @@ void setup() {
 
   delay(2000);
   gyroRead(dx, dy, dz);
-  digitalWrite(13, HIGH);   // set the LED on
+  digitalWrite(PIN_LED1, HIGH);
 
   // start the control loop timer
   tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
