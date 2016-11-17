@@ -7,11 +7,12 @@
 
 #include <math.h>
 #include "policy.h"
+#include "intAngVel.h"
+#include "ToneNotes.h"
+
 #include "gyroAccel.h"
 #include "motors.h"
-#include "intAngVel.h"
-#include "chipkit_patch.h"
-#include "ToneNotes.h"
+#include "encoders.h"
 
 int mode = 'R';
 
@@ -30,13 +31,6 @@ const float W_RADIUS = WHEEL_CIRC / (2 * M_PI);
 const float dt = 50e-3;                  // time step in seconds
 const float SPEED_MEASURE_WINDOW = 5e-3; // size of the window used to measure speed
 
-
-// pin definitions
-const uint8_t TT_DIR_PIN = 39;
-const uint8_t W_DIR_PIN = 47;
-
-int TMR3sign = 1;             // sign of the value in TMR3
-int TMR4sign = 1;             // sign of the value in TMR4
 int phase = 0;                // phase of main loop
 
 float dx, dy, dz;             // rate gyro readings [degrees per sec]
@@ -80,13 +74,6 @@ LogEntry logArray[H];
 // Type A timer
 p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
 
-// Type B timers
-p32_timer& tmr3 = *reinterpret_cast<p32_timer*>(_TMR3_BASE_ADDRESS);
-p32_timer& tmr4 = *reinterpret_cast<p32_timer*>(_TMR4_BASE_ADDRESS);
-
-//change notifier
-p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
-
 // Interrupt handlers begin
 
 void __attribute__((interrupt)) mainLoop(void) {
@@ -123,8 +110,8 @@ void __attribute__((interrupt)) mainLoop(void) {
   //this 5ms window is used for speed measurement
   if (phase == 0) {
     tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
-    intAngleTT = TMR3sign * tmr3.tmxTmr.reg; // TMR3 and thus AngleTT are to do with the turntable
-    intAngleW = TMR4sign * tmr4.tmxTmr.reg; // TMR4 and thus AngleW are to do with the wheel
+    intAngleTT = getTTangle();
+    intAngleW = getWangle();
 
     phase = 1;
   } else {
@@ -135,13 +122,13 @@ void __attribute__((interrupt)) mainLoop(void) {
     accelRead(ddx, ddy, ddz);
 
     // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
-    newAngleTT = static_cast<int16_t>(tmr3.tmxTmr.reg) * TMR3sign;
+    newAngleTT = getTTangle();
     AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
     dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
     oldAngleTT = newAngleTT;
 
     // Motorwheel angle
-    newAngleW = static_cast<int16_t>(tmr4.tmxTmr.reg) * TMR4sign;
+    newAngleW = getWangle();
     AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
     dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
 
@@ -192,45 +179,6 @@ void __attribute__((interrupt)) mainLoop(void) {
   } //end of else
 }
 
-void __attribute__((interrupt)) handleEncoderSignChange(void) {
-  // This interrupt handler is for keeping track of the TMR3&4 directions, flagged if direction changes
-  // They are counters to keep track of the two motor angles, so if direction changes,
-  // the counters need to count down rather than up
-
-  // convert pin numbers to ports - should be optimized out
-  const uint8_t w_port = digitalPinToPort(W_DIR_PIN);
-  const uint8_t w_mask = digitalPinToBitMask(W_DIR_PIN);
-  const uint8_t tt_port = digitalPinToPort(TT_DIR_PIN);
-  const uint8_t tt_mask = digitalPinToBitMask(TT_DIR_PIN);
-
-  // timing is everything, so do just one read if possible
-  bool wNeg, ttNeg;
-  if(w_port == tt_port) {
-    const uint8_t reading = portRegisters(w_port)->port.reg;
-    wNeg = reading & w_mask;
-    ttNeg = reading & tt_mask;
-  }
-  else {
-    wNeg = portRegisters(w_port)->port.reg & w_mask;
-    ttNeg = portRegisters(tt_mask)->port.reg & tt_mask;
-  }
-
-  clearIntFlag(_CHANGE_NOTICE_IRQ);
-
-  const int ttSign = ttNeg ? -1 : 1;
-  const int wSign  = wNeg ? -1 : 1;
-
-  if (TMR3sign != ttSign) {
-    tmr3.tmxTmr.reg = (short int) -tmr3.tmxTmr.reg;
-  }
-  TMR3sign = ttSign;
-
-  if (TMR4sign != wSign) {
-    tmr4.tmxTmr.reg = (short int) -tmr4.tmxTmr.reg;
-  }
-  TMR4sign = wSign;
-}
-
 void debug(const char* s) {
   Serial.println(s);
 }
@@ -254,17 +202,7 @@ void setup() {
   gyroAccelSetup();
 
   debug("Starting encoder setup");
-  // configure the change notice to watch the encoder pins
-  cn.cnCon.clr = 0xFFFF;
-  cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
-  cn.cnEn.reg = digitalPinToCN(TT_DIR_PIN) | digitalPinToCN(W_DIR_PIN);
-  cn.cnPue.reg = 0;
-
-  clearIntFlag(_CHANGE_NOTICE_IRQ);
-  setIntVector(_CHANGE_NOTICE_IRQ, handleEncoderSignChange);
-  setIntPriority(_CHANGE_NOTICE_IRQ, 2, 0); //should this be priority 2?
-  setIntEnable(_CHANGE_NOTICE_IRQ);
-
+  setupEncoders();
 
   // twitch both the turntable and wheel, so that we know things are working
   setMotorTurntable(-0.1);
@@ -276,19 +214,6 @@ void setup() {
   setMotorTurntable(0);
   setMotorWheel(0);
   delay(100);
-
-  // start the encoder timers
-  // T3 external source is the pulse from the turntable
-  tmr3.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
-  tmr3.tmxTmr.reg = 0;
-  tmr3.tmxPr.reg = 0xffff;
-  tmr3.tmxCon.set = TBCON_ON;
-
-  // T4 external source is the pulse from the wheel
-  tmr4.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
-  tmr4.tmxTmr.reg = 0;
-  tmr4.tmxPr.reg = 0xffff;
-  tmr4.tmxCon.set = TBCON_ON;
 
   delay(2000);
   gyroRead(dx, dy, dz);
