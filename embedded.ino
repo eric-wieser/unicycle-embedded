@@ -230,20 +230,26 @@ void __attribute__((interrupt)) handleEncoderSignChange(void) {
   TMR4sign = wSign;
 }
 
+void debug(const char* s) {
+  Serial.println(s);
+}
 
 // main function to setup the test
 void setup() {
   Serial.begin(57600);
+  debug("Yaw Actuated UniCycle startup");
 
   pinMode(PIN_LED1, OUTPUT);
   digitalWrite(PIN_LED1, LOW);
 
   //srand(54321);
 
+  debug("Starting PWM setup");
   setupMotors();
   setMotorTurntable(0);
   setMotorWheel(0);
 
+  debug("Starting I2C setup");
   gyroAccelSetup();
 
   gyroWrite(0x3e, 0x80);  // Reset to defaults
@@ -256,6 +262,7 @@ void setup() {
   // wait for gyro to get ready (setup)
   delay(1500);
 
+  debug("Starting encoder setup");
   // configure the change notice to watch the encoder pins
   cn.cnCon.clr = 0xFFFF;
   cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
@@ -296,6 +303,7 @@ void setup() {
   gyroRead(dx, dy, dz);
   digitalWrite(PIN_LED1, HIGH);
 
+  debug("All done");
   // start the control loop timer
   tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
   tmr1.tmxTmr.reg = 0;
