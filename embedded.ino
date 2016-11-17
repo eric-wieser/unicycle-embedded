@@ -81,25 +81,13 @@ void __attribute__((interrupt)) mainLoop(void) {
 
   static int16_t oldAngleTT = 0;  // old value of angle for turntable
   static int16_t intAngleTT = 0;  // intermediate value of angle for turntable
-  int16_t newAngleTT;
+  static float AngleTT = 0.0;     // turn table angular position variable
   static int16_t oldAngleW = 0;   // old value of angle for wheel
   static int16_t intAngleW = 0;   // intermediate value of angle for wheel
-  int16_t newAngleW;
+  static float AngleW = 0.0;      // wheel angular position variable
 
-  float w[3];                       // storage of the gyro spin values
-
-  float AngleTT = 0.0;          // turn table angular position variable
-  float dAngleTT = 0.0;         // turn table angular velocity variable
-
-  float AngleW = 0.0;           // wheel angular position variable
-  float dAngleW = 0.0;          // wheel angular velocity variable
-
-  float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
-  float roll, pitch, yaw;       // Euler angles of unicycle attitude
-  float droll, dpitch, dyaw;    // angular velocities
-
-  float dist, x_pos, y_pos;     // distance travelled linearly at a given time step, x-position and y-position
-  float xOrigin, yOrigin;       // variables for finding origin
+  static float x_pos = 0;
+  static float y_pos = 0;
 
   clearIntFlag(_TIMER_1_IRQ);
 
@@ -117,28 +105,37 @@ void __attribute__((interrupt)) mainLoop(void) {
   } else {
     tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
 
+    // read the gyro
+    float w[3];
     gyroRead(w[0], w[1], w[2]);
-    intAngVel(w, roll, pitch, yaw, droll, dpitch, dyaw); //Here roll pitch and yaw now match x,y,z orientationally
+
+    // read the accelerometer
+    float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
     accelRead(ddx, ddy, ddz);
 
+    // integrate angles
+    float roll, pitch, yaw;       // Euler angles of unicycle attitude
+    float droll, dpitch, dyaw;    // angular velocities
+    intAngVel(w, roll, pitch, yaw, droll, dpitch, dyaw); //Here roll pitch and yaw now match x,y,z orientationally
+
     // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
-    newAngleTT = getTTangle();
+    int16_t newAngleTT = getTTangle();
+    float dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
     AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
-    dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
     oldAngleTT = newAngleTT;
 
     // Motorwheel angle
-    newAngleW = getWangle();
+    int16_t newAngleW = getWangle();
+    float dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
     AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
-    dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
+    oldAngleW = newAngleW;
 
     // Try the distance calculations (some drift due to yaw)
-    dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + dpitch*dt);
-    oldAngleW = newAngleW;
+    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + dpitch*dt);
     x_pos += dist*cos(yaw);
     y_pos += dist*sin(yaw);
-    xOrigin = cos(yaw)*-x_pos+sin(yaw)*-y_pos;
-    yOrigin = -sin(yaw)*-x_pos+cos(yaw)*-y_pos;
+    float xOrigin = cos(yaw)*-x_pos + sin(yaw)*-y_pos;
+    float yOrigin = -sin(yaw)*-x_pos + cos(yaw)*-y_pos;
 
     phase = 0;
     if (count >= H) {
@@ -205,15 +202,15 @@ void setup() {
   setupEncoders();
 
   // twitch both the turntable and wheel, so that we know things are working
-  setMotorTurntable(-0.1);
-  setMotorWheel(-0.1);
-  delay(100);
-  setMotorTurntable(0.1);
-  setMotorWheel(0.1);
-  delay(100);
-  setMotorTurntable(0);
-  setMotorWheel(0);
-  delay(100);
+  // setMotorTurntable(-0.1);
+  // setMotorWheel(-0.1);
+  // delay(100);
+  // setMotorTurntable(0.1);
+  // setMotorWheel(0.1);
+  // delay(100);
+  // setMotorTurntable(0);
+  // setMotorWheel(0);
+  // delay(100);
 
   delay(2000);
   gyroRead(dx, dy, dz);
