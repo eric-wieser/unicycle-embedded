@@ -11,6 +11,7 @@
 #include "motors.h"
 #include "intAngVel.h"
 #include "chipkit_patch.h"
+#include "ToneNotes.h"
 
 int mode = 'R';
 
@@ -304,6 +305,18 @@ void setup() {
   digitalWrite(PIN_LED1, HIGH);
 
   debug("All done");
+
+  // make a starting noise
+  beep(NOTE_G6, 200);
+  delay(50);
+  beep(NOTE_D7, 200);
+  delay(50);
+  beep(NOTE_F7, 200);
+  delay(50);
+  beep(NOTE_FS7, 200);
+  delay(50);
+  beep(NOTE_G7, 450);
+
   // start the control loop timer
   tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
   tmr1.tmxTmr.reg = 0;

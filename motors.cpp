@@ -78,3 +78,34 @@ void setupMotors() {
     ocs[i]->ocxCon.set = OCCON_ON;
   }
 }
+
+void beep(float freq, int duration){
+  static int tot_dur = 0;
+
+  // calculate the period
+  uint32_t per = static_cast<uint32_t>(getPeripheralClock() / freq);
+  if(per > 0xffff)
+    return;
+
+  tmr2.tmxPr.reg = per;
+
+  // spin the turntable one way or the other, trying to minimize net movement
+  if(tot_dur <= 0) {
+    oc1.ocxRs.reg = 0x0000;
+    oc2.ocxRs.reg = 0x1000;
+    tot_dur += duration;
+  }
+  else{
+    oc1.ocxRs.reg = 0x1000;
+    oc2.ocxRs.reg = 0x0000;
+    tot_dur -= duration;
+  }
+
+  // let the beep complete
+  delay(duration);
+
+  // turn everything off, reset the period
+  oc1.ocxRs.reg = 0;
+  oc2.ocxRs.reg = 0;
+  tmr2.tmxPr.reg = 0xffff;
+}
