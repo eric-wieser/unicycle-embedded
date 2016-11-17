@@ -9,8 +9,7 @@
 #include "policy.h"
 #include "gyroAccel.h"
 #include "intAngVel.h"
-#include "p32_defs_patch.h"
-#include <sys/attribs.h>   // ISR macros
+#include "chipkit_patch.h"
 
 int mode = 'R';
 
@@ -94,11 +93,11 @@ p32_oc& oc4 = *reinterpret_cast<p32_oc*>(_OCMP4_BASE_ADDRESS);
 //change notifier
 p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
 
-extern "C" {
+// Interrupt handlers begin
 
-// main timer that keeps track of the 50ms period and perfoms the key funtionality
-void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
-{
+void __attribute__((interrupt)) mainLoop(void) {
+  // main timer that keeps track of the 50ms period and perfoms the key functionality
+
   static int16_t oldAngleTT = 0;  // old value of angle for turntable
   static int16_t intAngleTT = 0;  // intermediate value of angle for turntable
   int16_t newAngleTT;
@@ -199,11 +198,11 @@ void __ISR(_TIMER_1_VECTOR, ipl2) mainLoop(void)
   } //end of else
 }
 
-// This interrupt flag is for keeping track of the TMR3&4 directions, flagged if direction changes
-// They are counters to keep track of the two motor angles, so if direction changes,
-// the counters need to count down rather than up
-void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
-{
+void __attribute__((interrupt)) handleEncoderSignChange(void) {
+  // This interrupt handler is for keeping track of the TMR3&4 directions, flagged if direction changes
+  // They are counters to keep track of the two motor angles, so if direction changes,
+  // the counters need to count down rather than up
+
   // convert pin numbers to ports - should be optimized out
   const uint8_t w_port = digitalPinToPort(W_DIR_PIN);
   const uint8_t w_mask = digitalPinToBitMask(W_DIR_PIN);
@@ -238,8 +237,12 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) signChange3(void)
   TMR4sign = wSign;
 }
 
-void setupPWM() {
+void __attribute__((interrupt)) handlePWMTimer(void) {
+  // The timer 2 is currently not in use (doesn't do anything)
+  clearIntFlag(_TIMER_2_IRQ);
+}
 
+void setupPWM() {
   p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
 
   for(int i = 0; i < 4; i++) {
@@ -261,6 +264,7 @@ void setupPWM() {
   // corresponding source timer interrupt flag is asserted.
   // OC interrupt is not generated in PWM mode.
   clearIntFlag(_TIMER_2_IRQ);
+  setIntVector(_TIMER_2_IRQ, handlePWMTimer);
   setIntPriority(_TIMER_2_IRQ, 7, 0);
   setIntEnable(_TIMER_2_IRQ);
 
@@ -271,14 +275,6 @@ void setupPWM() {
     ocs[i]->ocxCon.set = OCCON_ON;
   }
 }
-
-// Example code for Timer2 ISR
-void __ISR(_TIMER_2_VECTOR, ipl7) T2_IntHandler (void) {
-  // The timer 2 is currently not in use (doesn't do anything)
-  clearIntFlag(_TIMER_2_IRQ);
-}
-
-} // end extern C
 
 // setup functions and main loop below
 
@@ -340,6 +336,7 @@ void setup() {
   cn.cnPue.reg = 0;
 
   clearIntFlag(_CHANGE_NOTICE_IRQ);
+  setIntVector(_CHANGE_NOTICE_IRQ, handleEncoderSignChange);
   setIntPriority(_CHANGE_NOTICE_IRQ, 2, 0); //should this be priority 2?
   setIntEnable(_CHANGE_NOTICE_IRQ);
 
@@ -380,10 +377,9 @@ void setup() {
 
   // set up interrupts on the control loop timer
   clearIntFlag(_TIMER_1_IRQ);
+  setIntVector(_TIMER_1_IRQ, mainLoop);
   setIntPriority(_TIMER_1_IRQ, 2, 0);
   setIntEnable(_TIMER_1_IRQ);
-
-
 }
 
 void printField(float LogEntry::* field, const char* name, bool debug) {
