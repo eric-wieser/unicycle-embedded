@@ -39,6 +39,16 @@ static void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
 void gyroAccelSetup()
 {
   OpenI2C(i2c1, I2C_EN, 0x062); // 400 KHz
+
+  gyroWrite(0x3e, 0x80);  // Reset to defaults
+  gyroWrite(0x16, 0x19);  // DLPF_CFG = 1 (188 Hz LP), FS_SEL = 3
+
+  accelWrite(0x31, 0x0f); // data format, 13 bits, left justified, +/-16g range
+  accelWrite(0x2c, 0x0b); // measurement rate, 200 Hz
+  accelWrite(0x2d, 0x08); // power ctrl, enable measurements
+
+  // wait for gyro to get ready (setup)
+  delay(1500);
 }
 
 // write one data byte to specified accelerometer register

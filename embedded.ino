@@ -253,16 +253,6 @@ void setup() {
   debug("Starting I2C setup");
   gyroAccelSetup();
 
-  gyroWrite(0x3e, 0x80);  // Reset to defaults
-  gyroWrite(0x16, 0x19);  // DLPF_CFG = 1 (188 Hz LP), FS_SEL = 3
-
-  accelWrite(0x31, 0x0f); // data format, 13 bits, left justified, +/-16g range
-  accelWrite(0x2c, 0x0b); // measurement rate, 200 Hz
-  accelWrite(0x2d, 0x08); // power ctrl, enable measurements
-
-  // wait for gyro to get ready (setup)
-  delay(1500);
-
   debug("Starting encoder setup");
   // configure the change notice to watch the encoder pins
   cn.cnCon.clr = 0xFFFF;
