@@ -31,7 +31,13 @@ const float W_RADIUS = WHEEL_CIRC / (2 * M_PI);
 const float dt = 50e-3;                  // time step in seconds
 const float SPEED_MEASURE_WINDOW = 5e-3; // size of the window used to measure speed
 
-int phase = 0;                // phase of main loop
+enum class LoopPhase {
+  PRE,
+  MAIN
+};
+LoopPhase phase = LoopPhase::PRE;      // phase of main loop
+
+
 
 float dx, dy, dz;             // rate gyro readings [degrees per sec]
 
@@ -96,12 +102,12 @@ void __attribute__((interrupt)) mainLoop(void) {
   }
 
   //this 5ms window is used for speed measurement
-  if (phase == 0) {
+  if (phase == LoopPhase::PRE) {
     tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
     intAngleTT = getTTangle();
     intAngleW = getWangle();
 
-    phase = 1;
+    phase = LoopPhase::MAIN;
   } else {
     tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
 
@@ -137,7 +143,7 @@ void __attribute__((interrupt)) mainLoop(void) {
     float xOrigin = cos(yaw)*-x_pos + sin(yaw)*-y_pos;
     float yOrigin = -sin(yaw)*-x_pos + cos(yaw)*-y_pos;
 
-    phase = 0;
+    phase = LoopPhase::PRE;
     if (count >= H) {
       counter = false;
       digitalWrite(PIN_LED1, LOW);
