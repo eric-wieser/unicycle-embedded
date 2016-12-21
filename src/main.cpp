@@ -5,7 +5,10 @@
 // Carl Edward Rasmussen
 // Aleksi Tukiainen, 2016-05-20
 
+#include "Arduino.h"
+
 #include <math.h>
+
 #include "policy.h"
 #include "intAngVel.h"
 #include "ToneNotes.h"
