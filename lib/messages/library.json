@@ -1,0 +1,6 @@
+{
+	"name": "messages",
+	"build": {
+		"extraScript": "build.py"
+	}
+}

@@ -5,14 +5,23 @@
 // Carl Edward Rasmussen
 // Aleksi Tukiainen, 2016-05-20
 
-#include "Arduino.h"
-
+// C includes
 #include <math.h>
 
-#include "policy.h"
-#include "intAngVel.h"
+// Platform includes
+#include "Arduino.h"
 #include "ToneNotes.h"
 
+// Third party includes
+#include <pb_encode.h>
+#include <pb_decode.h>
+
+// Our library includes
+#include <messages.pb.h>
+
+// Local includes
+#include "policy.h"
+#include "intAngVel.h"
 #include "gyroAccel.h"
 #include "motors.h"
 #include "encoders.h"
@@ -49,34 +58,6 @@ static int count = 0;         // variable to keep track of how many measurements
 const int H = 50;             // gives the time horizon or "how many time steps will be measured"
 
 // Storage arrays in same order as in unicycle "doitnlds" file
-struct LogEntry {
-  float droll;            // 1   roll angular velocity
-  float dyaw;             // 2   yaw angular velocity
-  float dAngleW;          // 3   Wheel angular velocity
-  float dpitch;           // 4   pitch angular velocity
-  float dAngleTT;         // 5   turn table angular velocity
-  float xOrigin;          // 6   x position of origin in self centered coord
-  float yOrigin;          // 7   y position of origin in self centered coord
-  float roll;             // 8   roll angle
-  float yaw;              // 9   yaw angle
-  float pitch;            // 10  pitch angle
-  //float dx;             // 11  x velocity
-  //float dy;             // 12  y velocity
-  //float dxOrigin;       // 13  x velocity of origin in self centered coord
-  //float dyOrigin;       // 14  y velocity of origin in self centered coord
-  float x;                // 15  x position
-  float y;                // 16  y position
-  float AngleW;           // 17  wheel angle
-  float AngleTT;          // 18  turn table angle
-  float TurntableInput;   // 19  control torque for turntable (here we record what is demanded, not what provided due to duty maximum of 1)
-  float WheelInput;       // 20  control torque for wheel (here we record what is demanded, not what provided due to duty maximum of 1)
-
-  // We may need the accelerations for calibrating the start measurements
-  float ddx;
-  float ddy;
-  float ddz;
-};
-
 
 LogEntry logArray[H];
 
