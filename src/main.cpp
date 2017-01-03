@@ -17,7 +17,7 @@
 #include <pb_decode.h>
 
 // Our library includes
-#include <messages.pb.h>
+#include <messaging.h>
 
 // Local includes
 #include "policy.h"
@@ -166,13 +166,9 @@ void __attribute__((interrupt)) mainLoop(void) {
   } //end of else
 }
 
-void debug(const char* s) {
-  Serial.println(s);
-}
-
 // main function to setup the test
 void setup() {
-  Serial.begin(57600);
+  setupMessaging();
   debug("Yaw Actuated UniCycle startup");
 
   pinMode(PIN_LED1, OUTPUT);
@@ -244,11 +240,8 @@ void printField(float LogEntry::* field, const char* name, bool debug) {
   Serial.println("");
 }
 
+bool done = false;
 void loop() {
-
-  // This part is for testing purposes
-  // Serial.begin();
-  // delay(1000);
 
   if (counter)
   {
@@ -259,25 +252,14 @@ void loop() {
   {
     setMotorTurntable(0);
     setMotorWheel(0);
+
+    // temporary until we get the terminal sending
+    if(count >= H && !done) {
+      debug("Test complete");
+      sendLogs(logArray, H);
+      done = true;
+    }
   }
-
-//  if (counter == false) {
-//    Serial.println('c');
-//    for (int k=0; k<H; k++) {
-//      Serial.println(mode);
-//      while (mode == 'R') {
-//          mode = Serial.read();
-//          Serial.println('R2');
-//      }
-//      if (mode == 'W') {Serial.println(logArray[k].pitch,4);}
-//      mode='R';
-//    }
-//  }
-
-  // End of testing
-
-  // Controllers
-
 
   // Data to serial port
   // This makes sure we only show these after we've done the measurements
@@ -285,43 +267,8 @@ void loop() {
     mode = Serial.read();
     bool sendSomething = false;
     bool sendDebug = false;
-    if (mode == 'W') {
-      sendSomething = true;
-    }
-    else if (mode == 'w') {
-      sendSomething = true;
-      sendDebug = true;
-    }
-
-    if(sendSomething) {
-      Serial.println(dx, 4);
-      Serial.println(dy, 4);
-      Serial.println(dz, 4);
-      Serial.println(' ');
-
-      #define PRINT_FIELD(name) printField(&LogEntry:: name, #name, sendDebug)
-        PRINT_FIELD(droll);
-        PRINT_FIELD(dyaw);
-        PRINT_FIELD(dAngleW);
-        PRINT_FIELD(dpitch);
-        PRINT_FIELD(dAngleTT);
-        PRINT_FIELD(xOrigin);
-        PRINT_FIELD(yOrigin);
-        PRINT_FIELD(roll);
-        PRINT_FIELD(yaw);
-        PRINT_FIELD(pitch);
-        PRINT_FIELD(x);
-        PRINT_FIELD(y);
-        PRINT_FIELD(AngleW);
-        PRINT_FIELD(AngleTT);
-        PRINT_FIELD(TurntableInput);
-        PRINT_FIELD(WheelInput);
-        PRINT_FIELD(ddx);
-        PRINT_FIELD(ddy);
-        PRINT_FIELD(ddz);
-      #undef PRINT_FIELD
-
-      mode = 'R';
+    if (mode == 'w') {
+      sendLogs(logArray, H);
     }
   }
 }

@@ -45,8 +45,17 @@ message LogEntry {
   float ddz = 23;
 };
 
+message LogMessage {
+  repeated LogEntry entries = 1;
+}
+
+message DebugMessage {
+  string s = 1;
+}
+
 message RobotMessage {
   oneof msg {
-    LogEntry log = 1;
+    LogMessage log = 1;
+    DebugMessage debug = 2;
   }
 }

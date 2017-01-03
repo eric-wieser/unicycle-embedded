@@ -1,2 +1,4 @@
 .pioenvs
 .piolibdeps
+*.pyc
+__pycache__
