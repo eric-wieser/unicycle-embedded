@@ -1,30 +1,37 @@
-from SCons.Script import DefaultEnvironment
-import os
+"""
+This file is loaded by PlatformIO to do a custom build of this directory.
+The main library being used here is Scons
 
-env = DefaultEnvironment()
+We use it to compile the protobuf definition files using nanopb.
 
-def _detect():
-    """Try to find the Protoc compiler"""
-    try:
-        return env['PROTOC']
-    except KeyError:
-        pass
+Running `pio run -t python` will rebuild the python protobuf files
+and dump them in :/tools
+"""
 
-    protoc = env.WhereIs('protoc')
-    if protoc:
-        return protoc
+from SCons.Script import DefaultEnvironment, Main
 
-    else:
-        # this is where it is on my machine
-        protoc = r'C:\software\nanopb-0.3.7-windows-x86\generator-bin\protoc.exe'
-        if os.path.exists(protoc):
-            return protoc
+# This line forces scons to discover our site_scons/site_tools/protoc.py file
+# We shouldn't have to do this - it's normally automatic
+# This is probably a bug in platformio
+Main.test_load_all_site_scons_dirs('.')
 
-env['PROTOC'] = _detect()
+env = DefaultEnvironment().Clone(tools=['protoc'])
 
-# rebuild protobuf files
-env.Command(
-    target=['messages.pb.c', 'messages.pb.h'],
+# Add search paths for the protoc tool. This needs to be the one built with nanopb.
+# Try to only add lines here, so that it works on all previous editor's PCS
+env.AppendENVPath('PATH', R'C:\software\nanopb-0.3.7-windows-x86\generator-bin')
+
+# configure build for arduino protobuf files
+target_nanopb = env.Protoc(
+    target=[],
     source='messages.proto',
-    action='$PROTOC --nanopb_out=. $SOURCES'
+    PROTOCNANOOUTDIR='${SOURCE.dir}'
 )
+
+# configure build for python protobuf files
+target_python = env.Protoc(
+    target=[],
+    source='messages.proto',
+    PROTOCPYTHONOUTDIR='tools'
+)
+env.Alias('python', target_python)
