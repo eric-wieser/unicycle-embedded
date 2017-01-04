@@ -134,32 +134,33 @@ void __attribute__((interrupt)) mainLoop(void) {
     } // recording only over the time horizon
     if (counter) {
       // Data recording starts here!
-      logArray[count].droll = droll;         // 1   roll angular velocity
-      logArray[count].dyaw = dyaw;           // 2   yaw angular velocity
-      logArray[count].dAngleW = dAngleW;     // 3   Wheel angular velocity
-      logArray[count].dpitch = dpitch;       // 4   pitch angular velocity
-      logArray[count].dAngleTT = dAngleTT;   // 5   turn table angular velocity
-      logArray[count].xOrigin = xOrigin;     // 6   x position of origin in self centered coord
-      logArray[count].yOrigin = yOrigin;     // 7   y position of origin in self centered coord
-      logArray[count].roll = roll;           // 8   roll angle
-      logArray[count].yaw = yaw;             // 9   yaw angle
-      logArray[count].pitch = pitch;         // 10  pitch angle
-      //logArray[count].dx;                  // 11  x velocity
-      //logArray[count].dy;                  // 12  y velocity
-      //logArray[count].dxOrigin;            // 13  x velocity of origin in self centered coord
-      //logArray[count].dyOrigin;            // 14  y velocity of origin in self centered coord
-      logArray[count].x = x_pos;             // 15  x position
-      logArray[count].y = y_pos;             // 16  y position
-      logArray[count].AngleW = AngleW;       // 17  wheel angle
-      logArray[count].AngleTT = AngleTT;     // 18  turn table angle
-      logArray[count].TurntableInput = policyTurntable(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 19  control torque for turntable
-      logArray[count].WheelInput = policyWheel(droll, dyaw, dAngleW, dpitch, dAngleTT, xOrigin, yOrigin, roll, yaw, pitch); // 20  control torque for wheel
+      LogEntry& currLog = logArray[count];
+      currLog.droll = droll;         // 1   roll angular velocity
+      currLog.dyaw = dyaw;           // 2   yaw angular velocity
+      currLog.dAngleW = dAngleW;     // 3   Wheel angular velocity
+      currLog.dpitch = dpitch;       // 4   pitch angular velocity
+      currLog.dAngleTT = dAngleTT;   // 5   turn table angular velocity
+      currLog.xOrigin = xOrigin;     // 6   x position of origin in self centered coord
+      currLog.yOrigin = yOrigin;     // 7   y position of origin in self centered coord
+      currLog.roll = roll;           // 8   roll angle
+      currLog.yaw = yaw;             // 9   yaw angle
+      currLog.pitch = pitch;         // 10  pitch angle
+      //currLog.dx;                  // 11  x velocity
+      //currLog.dy;                  // 12  y velocity
+      //currLog.dxOrigin;            // 13  x velocity of origin in self centered coord
+      //currLog.dyOrigin;            // 14  y velocity of origin in self centered coord
+      currLog.x = x_pos;             // 15  x position
+      currLog.y = y_pos;             // 16  y position
+      currLog.AngleW = AngleW;       // 17  wheel angle
+      currLog.AngleTT = AngleTT;     // 18  turn table angle
+      currLog.TurntableInput = policyTurntable(currLog); // 19  control torque for turntable
+      currLog.WheelInput = policyWheel(currLog); // 20  control torque for wheel
       //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
 
       // We may need the accelerations for calibrating the start measurements
-      logArray[count].ddx = ddx;
-      logArray[count].ddy = ddy;
-      logArray[count].ddz = ddz;
+      currLog.ddx = ddx;
+      currLog.ddy = ddy;
+      currLog.ddz = ddz;
 
       count += 1;
     }
