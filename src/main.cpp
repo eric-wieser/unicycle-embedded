@@ -229,18 +229,6 @@ void setup() {
   setIntEnable(_TIMER_1_IRQ);
 }
 
-void printField(float LogEntry::* field, const char* name, bool debug) {
-  if(debug) {
-    Serial.print(name);
-    Serial.print(": ");
-  }
-  for (int k = 0; k < H; k++) {
-    Serial.print(logArray[k].*field, 4);
-    Serial.print(',');
-  }
-  Serial.println("");
-}
-
 bool done = false;
 void loop() {
 
