@@ -71,18 +71,20 @@ namespace {
             // finish the packet
             cobs_out.end();
         }
+
+        Serial.flush();
     }
 
     //! base packet listener
     void handlePacket(uint8_t* data, size_t n) {
         pb_istream_t pb_stream = pb_istream_from_buffer(data, n);
-        debug("Got a message");
-        debug(reinterpret_cast<char*>(data));
 
         PCMessage message = PCMessage_init_zero;
         bool status = pb_decode(&pb_stream, PCMessage_fields, &message);
 
         if(!status) {
+            debug("Message was corrupt");
+            debug(reinterpret_cast<char*>(data), n);
             return;
         }
 
@@ -90,7 +92,24 @@ namespace {
             case PCMessage_controller_tag: messageHandlers<SetController>::handler.operator ()(message.msg.controller); return;
             case PCMessage_go_tag:         messageHandlers<Go>::handler.operator ()(message.msg.go); return;
             case PCMessage_stop_tag:       messageHandlers<Stop>::handler.operator ()(message.msg.stop); return;
+            default:
+                debug("Message type unknown");
+                debug(reinterpret_cast<char*>(data), n);
+                return;
         }
+    }
+
+    using PacketError = packetio::PacketListener::Error;
+
+    void handleError(uint8_t* data, size_t n, PacketError e) {
+        if(e == PacketError::Overflow)
+            debug("Overflow error");
+        else if(e == PacketError::Framing)
+            debug("Framing error");
+        else
+            debug("Unknown error");
+
+        debug(reinterpret_cast<char*>(data), n);
     }
 
 }
@@ -99,6 +118,7 @@ namespace {
 void setupMessaging() {
     Serial.begin(57600);
     listener.onMessage(handlePacket);
+    listener.onError(handleError);
 }
 
 void updateMessaging() {
