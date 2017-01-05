@@ -234,9 +234,11 @@ auto on_go = [](const Go& go) {
 
   // enter the new mode
   mode = target;
+  digitalWrite(PIN_LED1, HIGH);
 };
 auto on_stop = [](const Stop& stop) {
   mode = Mode::IDLE;
+  digitalWrite(PIN_LED1, LOW);
 
   bulk.i = 0;
   bulk.n = 0;
