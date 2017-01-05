@@ -9,12 +9,8 @@
 #include <math.h>
 
 // Platform includes
-#include "Arduino.h"
-#include "ToneNotes.h"
-
-// Third party includes
-#include <pb_encode.h>
-#include <pb_decode.h>
+#include <Arduino.h>
+#include <ToneNotes.h>
 
 // Our library includes
 #include <messaging.h>
@@ -167,10 +163,22 @@ void __attribute__((interrupt)) mainLoop(void) {
   } //end of else
 }
 
+// set up the message handlers
+auto on_go = [](const Go& go) {
+  debug("Go!");
+};
+auto on_stop = [](const Stop& stop) {
+  debug("Stop!");
+};
+
 // main function to setup the test
 void setup() {
   setupMessaging();
   debug("Yaw Actuated UniCycle startup");
+
+  onMessage<Go>(&on_go);
+  onMessage<Stop>(&on_stop);
+  onMessage<SetController>(setPolicy);
 
   pinMode(PIN_LED1, OUTPUT);
   digitalWrite(PIN_LED1, LOW);
@@ -231,14 +239,13 @@ void setup() {
 
 bool done = false;
 void loop() {
+  updateMessaging();
 
-  if (counter)
-  {
+  if (counter) {
     setMotorTurntable(logArray[count-1].TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
     setMotorWheel(logArray[count-1].WheelInput);            // the counter counts up. Thus the value stored and implemented match
   }
-  else
-  {
+  else {
     setMotorTurntable(0);
     setMotorWheel(0);
 
@@ -249,16 +256,4 @@ void loop() {
       done = true;
     }
   }
-
-  // Data to serial port
-  // This makes sure we only show these after we've done the measurements
-  if (Serial.available() > 0) {
-    mode = Serial.read();
-    bool sendSomething = false;
-    bool sendDebug = false;
-    if (mode == 'w') {
-      sendLogs(logArray, H);
-    }
-  }
 }
-
