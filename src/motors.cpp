@@ -21,7 +21,9 @@ namespace {
 // function definitions for setting the motor duty cycle
 // note that the timers count only to 0xffff, despite the OC being 32 bits
 void setMotorTurntable(float cmd) {
-  uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
+  float mag = abs(cmd);
+  if(mag > 1) mag = 1;
+  uint32_t duty = round(tmr2.tmxPr.reg * mag);
 
   if(cmd < 0) {
     oc1.ocxRs.reg = 0x0000;
@@ -33,7 +35,9 @@ void setMotorTurntable(float cmd) {
 }
 
 void setMotorWheel(float cmd) {
-  uint32_t duty = round(tmr2.tmxPr.reg * abs(cmd));
+  float mag = abs(cmd);
+  if(mag > 1) mag = 1;
+  uint32_t duty = round(tmr2.tmxPr.reg * mag);
 
   if(cmd < 0) {
     oc3.ocxRs.reg = 0x0000;
