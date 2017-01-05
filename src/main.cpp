@@ -69,7 +69,7 @@ LogEntry singleLog;
 LogEntry* currLog = &singleLog;
 
 // Type A timer
-p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
+volatile p32_timer& tmr1 = *reinterpret_cast<volatile p32_timer*>(_TMR1_BASE_ADDRESS);
 
 // Interrupt handlers begin
 

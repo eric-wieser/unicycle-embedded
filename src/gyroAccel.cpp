@@ -12,7 +12,7 @@ using namespace i2c_funcs;
 
 namespace {
   // use I2C1
-  p32_i2c& i2c1 = *reinterpret_cast<p32_i2c*>(_I2C1_BASE_ADDRESS);
+  volatile p32_i2c& i2c1 = *reinterpret_cast<volatile p32_i2c*>(_I2C1_BASE_ADDRESS);
 
   // write one data byte to a specified register at I2C address
   void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
