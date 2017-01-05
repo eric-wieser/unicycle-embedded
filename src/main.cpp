@@ -196,6 +196,7 @@ auto on_go = [](const Go& go) {
   // default to the maximum number of steps
   ssize_t n = go.steps;
   if(n == 0) n = H_max;
+  if(n > H_max) n = H_max;
 
   // lock the background loop so we can change mode
   mode = Mode::CHANGING;
