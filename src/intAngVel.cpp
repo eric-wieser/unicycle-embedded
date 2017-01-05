@@ -10,13 +10,12 @@
 #include "intAngVel.h"
 #include "quat.h"                      // quaternion library
 
-void intAngVel(const float *w,
-               float &phi, float &theta, float &psi,
-               float &dphi, float &dtheta, float &dpsi)
+void intAngVel(quat& q,
+               float *w0,
+               const float *w,
+               euler_angle &orient,
+               euler_angle &dorient)
 {
-  static quat q(1, 0, 0, 0); //we first define q as an identity quaternion with no rotation
-  static float w0[3] = {0.0, 0.0, 0.0}; //what is w0 for? - It's for keeping track of the velocity before!
-  float phi1, theta1, psi1;
   //Here below is the conversion from local angular velocities into a position quaternion.
   // Here we have the area under the speed curve - the position!
   quat p( 1+((w0[0]+w[0])*dt/4.0)*((w0[1]+w[1])*dt/4.0)*((w0[2]+w[2])*dt/4.0),
@@ -31,10 +30,12 @@ void intAngVel(const float *w,
   quat q1 = p1*q;
   q1.normalize();       // unit quaternion to represent the next position after a tiny timestep forward
 
-  q.euler(phi, theta, psi);             // extract Euler angles (currently in 1,2,3)
+  q.euler(orient.phi, orient.theta, orient.psi);             // extract Euler angles (currently in 1,2,3)
+
+  float phi1, theta1, psi1;
   q1.euler(phi1, theta1, psi1);         // extract Euler angles after small timestep (currently in 1,2,3)
-  dphi = (phi1-phi)/(dt/10);
-  dtheta = (theta1-theta)/(dt/10);
-  dpsi = (psi1-psi)/(dt/10); // instantaneous Euler velocities
+  dorient.phi   = (phi1 - orient.phi)/(dt/10);
+  dorient.theta = (theta1 - orient.theta)/(dt/10);
+  dorient.psi   = (psi1 - orient.psi)/(dt/10); // instantaneous Euler velocities
   for (int i=0; i<3; i++) w0[i] = w[i]; // save speeds for next call
 }

@@ -21,6 +21,7 @@
 #include "gyroAccel.h"
 #include "motors.h"
 #include "encoders.h"
+#include "quat.h"
 
 // Kinematic properties
 const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
@@ -83,6 +84,10 @@ struct StateTracker {
   float x_pos = 0;
   float y_pos = 0;
 
+  quat q = quat(1, 0, 0, 0);      // identity quaternion with no rotation
+
+  float w0[3] = {0.0, 0.0, 0.0}; // keeping track of the velocity
+
   void pre_update() {
     intAngleTT = getTTangle();
     intAngleW = getWangle();
@@ -97,14 +102,15 @@ struct StateTracker {
     float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
     accelRead(ddx, ddy, ddz);
 
-    // integrate angles
-    float roll, pitch, yaw;       // Euler angles of unicycle attitude
-    float droll, dpitch, dyaw;    // angular velocities
-    intAngVel(w, roll, pitch, yaw, droll, dpitch, dyaw); //Here roll pitch and yaw now match x,y,z orientationally
+    // compute euler angles and their derivatives
+    // Here roll pitch and yaw now match x,y,z orientationally (TODO: what?)
+    euler_angle orient;
+    euler_angle d_orient;
+    intAngVel(q, w0, w, orient, d_orient);
 
     // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
     int16_t newAngleTT = getTTangle();
-    float dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD); 
+    float dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD);
     AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
     oldAngleTT = newAngleTT;
 
@@ -114,34 +120,36 @@ struct StateTracker {
     AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
     oldAngleW = newAngleW;
 
-    // Try the distance calculations (some drift due to yaw)
-    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + dpitch*dt);
-    x_pos += dist*cos(yaw);
-    y_pos += dist*sin(yaw);
-    float xOrigin = cos(yaw)*-x_pos + sin(yaw)*-y_pos;
-    float yOrigin = -sin(yaw)*-x_pos + cos(yaw)*-y_pos;
+    // Try the distance calculations (some drift due to yaw (psi))
+    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + d_orient.psi*dt);
+    x_pos += dist*cos(orient.psi);
+    y_pos += dist*sin(orient.psi);
+    float xOrigin = cos(orient.psi)*-x_pos + sin(orient.psi)*-y_pos;
+    float yOrigin = -sin(orient.psi)*-x_pos + cos(orient.psi)*-y_pos;
 
     // Data recording starts here!
-    l.droll = droll;         // 1   roll angular velocity
-    l.dyaw = dyaw;           // 2   yaw angular velocity
-    l.dAngleW = dAngleW;     // 3   Wheel angular velocity
-    l.dpitch = dpitch;       // 4   pitch angular velocity
-    l.dAngleTT = dAngleTT;   // 5   turn table angular velocity
-    l.xOrigin = xOrigin;     // 6   x position of origin in self centered coord
-    l.yOrigin = yOrigin;     // 7   y position of origin in self centered coord
-    l.roll = roll;           // 8   roll angle
-    l.yaw = yaw;             // 9   yaw angle
-    l.pitch = pitch;         // 10  pitch angle
-    //l.dx;                  // 11  x velocity
-    //l.dy;                  // 12  y velocity
-    //l.dxOrigin;            // 13  x velocity of origin in self centered coord
-    //l.dyOrigin;            // 14  y velocity of origin in self centered coord
-    l.x = x_pos;             // 15  x position
-    l.y = y_pos;             // 16  y position
-    l.AngleW = AngleW;       // 17  wheel angle
-    l.AngleTT = AngleTT;     // 18  turn table angle
-    l.TurntableInput = policyTurntable(l); // 19  control torque for turntable
-    l.WheelInput = policyWheel(l); // 20  control torque for wheel
+    l.droll  = d_orient.phi;   // roll angular velocity
+    l.dyaw   = d_orient.psi;   // yaw angular velocity
+    l.dpitch = d_orient.theta; // pitch angular velocity
+
+    l.roll  = orient.phi;      // roll angle
+    l.yaw   = orient.psi;      // yaw angle
+    l.pitch = orient.theta;    // pitch angle
+
+    l.dAngleW = dAngleW;       // Wheel angular velocity
+    l.dAngleTT = dAngleTT;     // turn table angular velocity
+    l.xOrigin = xOrigin;       // x position of origin in self centered coord
+    l.yOrigin = yOrigin;       // y position of origin in self centered coord
+    //l.dx;                    // x velocity
+    //l.dy;                    // y velocity
+    //l.dxOrigin;              // x velocity of origin in self centered coord
+    //l.dyOrigin;              // y velocity of origin in self centered coord
+    l.x = x_pos;               // x position
+    l.y = y_pos;               // y position
+    l.AngleW  = AngleW;        // wheel angle
+    l.AngleTT = AngleTT;       // turn table angle
+    l.TurntableInput = policyTurntable(l); // control torque for turntable
+    l.WheelInput = policyWheel(l); // control torque for wheel
     //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
 
     // We may need the accelerations for calibrating the start measurements
@@ -187,6 +195,15 @@ void __attribute__((interrupt)) mainLoop(void) {
       }
     }
     state_tracker.update(*currLog);
+
+    if (mode == Mode::CONTINUOUS || mode == Mode::BULK) {
+      setMotorTurntable(currLog->TurntableInput);
+      setMotorWheel(currLog->WheelInput);
+    }
+    else {
+      setMotorTurntable(0);
+      setMotorWheel(0);
+    }
   }
 }
 
@@ -214,6 +231,7 @@ auto on_go = [](const Go& go) {
 
   // reset the state
   state_tracker = StateTracker();
+  resetEncoders();
 
   // compute the new mode
   Mode target;
@@ -304,14 +322,6 @@ void setup() {
 void loop() {
   updateMessaging();
 
-  if (mode == Mode::CONTINUOUS || mode == Mode::BULK) {
-    setMotorTurntable(currLog->TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
-    setMotorWheel(currLog->WheelInput);            // the outputEnabled counts up. Thus the value stored and implemented match
-  }
-  else {
-    setMotorTurntable(0);
-    setMotorWheel(0);
-  }
   if(bulk.data_pending) {
     // temporary until we get the terminal sending
     debug("Test complete");
