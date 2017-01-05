@@ -4,6 +4,7 @@ import os
 import sys
 import functools
 import readline
+import time
 
 import colorama
 from colorama import Fore, Style
@@ -29,13 +30,24 @@ async def main():
         )
 
 async def show_incoming(reader):
+    last_time = time.time()
     while True:
+        this_time = time.time()
         try:
             val = await reader.read()
         except CommsError as e:
-            print_and_reprompt(e)
+            pass # print_and_reprompt(e)
         else:
-            print_and_reprompt(val)
+            ok = True
+            if val.WhichOneof('msg') != 'log':
+                ok = True
+            elif this_time - last_time > 0.5:
+                ok = True
+                last_time = this_time
+            else:
+                ok = False
+            if ok:
+                print_and_reprompt(val)
 
 async def build_outgoing(writer):
     await Commands(writer).cmdloop()
