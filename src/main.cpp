@@ -71,36 +71,24 @@ LogEntry* currLog = &singleLog;
 // Type A timer
 volatile p32_timer& tmr1 = *reinterpret_cast<volatile p32_timer*>(_TMR1_BASE_ADDRESS);
 
-// Interrupt handlers begin
+//! handles computing the overall state
+struct StateTracker {
+  int16_t oldAngleTT = 0;  // old value of angle for turntable
+  int16_t intAngleTT = 0;  // intermediate value of angle for turntable
+  float AngleTT = 0.0;     // turn table angular position variable
+  int16_t oldAngleW = 0;   // old value of angle for wheel
+  int16_t intAngleW = 0;   // intermediate value of angle for wheel
+  float AngleW = 0.0;      // wheel angular position variable
 
-void __attribute__((interrupt)) mainLoop(void) {
-  // main timer that keeps track of the 50ms period and perfoms the key functionality
+  float x_pos = 0;
+  float y_pos = 0;
 
-  static int16_t oldAngleTT = 0;  // old value of angle for turntable
-  static int16_t intAngleTT = 0;  // intermediate value of angle for turntable
-  static float AngleTT = 0.0;     // turn table angular position variable
-  static int16_t oldAngleW = 0;   // old value of angle for wheel
-  static int16_t intAngleW = 0;   // intermediate value of angle for wheel
-  static float AngleW = 0.0;      // wheel angular position variable
-
-  static float x_pos = 0;
-  static float y_pos = 0;
-
-  clearIntFlag(_TIMER_1_IRQ);
-
-  // if we're changing mode, it's not safe to access any other mode variables
-  if(mode == Mode::CHANGING) return;
-
-  //this 5ms window is used for speed measurement
-  if (phase == LoopPhase::PRE) {
-    tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
+  void pre_update() {
     intAngleTT = getTTangle();
     intAngleW = getWangle();
+  }
 
-    phase = LoopPhase::MAIN;
-  } else {
-    tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
-
+  void update(LogEntry& l) {
     // read the gyro
     float w[3];
     gyroRead(w[0], w[1], w[2]);
@@ -133,23 +121,7 @@ void __attribute__((interrupt)) mainLoop(void) {
     float xOrigin = cos(yaw)*-x_pos + sin(yaw)*-y_pos;
     float yOrigin = -sin(yaw)*-x_pos + cos(yaw)*-y_pos;
 
-    phase = LoopPhase::PRE;
-
-    // choose where to store data
-    currLog = &singleLog;
-    if(mode == Mode::BULK) {
-      if(bulk.i < bulk.n) {
-        currLog = &(bulk.logs[bulk.i++]);
-      }
-      else {
-        mode = Mode::IDLE;
-        bulk.data_pending = true;
-        digitalWrite(PIN_LED1, LOW);
-      }
-    }
-
     // Data recording starts here!
-    LogEntry& l = *currLog;
     l.droll = droll;         // 1   roll angular velocity
     l.dyaw = dyaw;           // 2   yaw angular velocity
     l.dAngleW = dAngleW;     // 3   Wheel angular velocity
@@ -176,7 +148,46 @@ void __attribute__((interrupt)) mainLoop(void) {
     l.ddx = ddx;
     l.ddy = ddy;
     l.ddz = ddz;
-  } //end of else
+  }
+};
+
+StateTracker state_tracker;
+
+// Interrupt handlers begin
+
+void __attribute__((interrupt)) mainLoop(void) {
+  // main timer that keeps track of the 50ms period and perfoms the key functionality
+  clearIntFlag(_TIMER_1_IRQ);
+
+  // if we're changing mode, it's not safe to access any other mode variables
+  if(mode == Mode::CHANGING) return;
+
+  //this 5ms window is used for speed measurement
+  if (phase == LoopPhase::PRE) {
+    tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
+    phase = LoopPhase::MAIN;
+
+    state_tracker.pre_update();
+  }
+  // the remaining window is used for collecting the rest of the data and computing output
+  else {
+    tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
+    phase = LoopPhase::PRE;
+
+    // choose where to store data
+    currLog = &singleLog;
+    if(mode == Mode::BULK) {
+      if(bulk.i < bulk.n) {
+        currLog = &(bulk.logs[bulk.i++]);
+      }
+      else {
+        mode = Mode::IDLE;
+        digitalWrite(PIN_LED1, LOW);
+        bulk.data_pending = true;
+      }
+    }
+    state_tracker.update(*currLog);
+  }
 }
 
 void play_starting_noise() {
@@ -200,6 +211,9 @@ auto on_go = [](const Go& go) {
 
   // lock the background loop so we can change mode
   mode = Mode::CHANGING;
+
+  // reset the state
+  state_tracker = StateTracker();
 
   // compute the new mode
   Mode target;
