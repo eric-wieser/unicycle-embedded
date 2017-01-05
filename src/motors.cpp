@@ -66,8 +66,8 @@ void setupMotors() {
   // corresponding source timer interrupt flag is asserted.
   // OC interrupt is not generated in PWM mode.
   clearIntFlag(_TIMER_2_IRQ);
-  setIntVector(_TIMER_2_IRQ, handlePWMTimer);
-  setIntPriority(_TIMER_2_IRQ, 7, 0);
+  setIntVector(_TIMER_2_VECTOR, handlePWMTimer);
+  setIntPriority(_TIMER_2_VECTOR, 7, 0);
   setIntEnable(_TIMER_2_IRQ);
 
   // enable TMR2

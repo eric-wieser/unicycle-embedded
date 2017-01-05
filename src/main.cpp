@@ -314,8 +314,8 @@ void setup() {
 
   // set up interrupts on the control loop timer
   clearIntFlag(_TIMER_1_IRQ);
-  setIntVector(_TIMER_1_IRQ, mainLoop);
-  setIntPriority(_TIMER_1_IRQ, 2, 0);
+  setIntVector(_TIMER_1_VECTOR, mainLoop);
+  setIntPriority(_TIMER_1_VECTOR, 2, 0);
   setIntEnable(_TIMER_1_IRQ);
 }
 

@@ -15,8 +15,8 @@ namespace {
   //change notifier
   volatile p32_cn& cn = *reinterpret_cast<volatile p32_cn*>(_CN_BASE_ADDRESS);
 
-  int TMR3sign = 1;             // sign of the value in TMR3
-  int TMR4sign = 1;             // sign of the value in TMR4
+  volatile int TMR3sign = 1;             // sign of the value in TMR3
+  volatile int TMR4sign = 1;             // sign of the value in TMR4
 
   void __attribute__((interrupt)) handleEncoderSignChange(void) {
     // This interrupt handler is for keeping track of the TMR3&4 directions, flagged if direction changes
@@ -66,8 +66,8 @@ void setupEncoders() {
   cn.cnPue.reg = 0;
 
   clearIntFlag(_CHANGE_NOTICE_IRQ);
-  setIntVector(_CHANGE_NOTICE_IRQ, handleEncoderSignChange);
-  setIntPriority(_CHANGE_NOTICE_IRQ, 2, 0); //should this be priority 2?
+  setIntVector(_CHANGE_NOTICE_VECTOR, handleEncoderSignChange);
+  setIntPriority(_CHANGE_NOTICE_VECTOR, 2, 0); //should this be priority 2?
   setIntEnable(_CHANGE_NOTICE_IRQ);
 
   // start the encoder timers
