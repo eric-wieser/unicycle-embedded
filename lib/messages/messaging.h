@@ -12,7 +12,7 @@ void sendLogs(const LogEntry* entries, size_t n);
 //! stores a handler for each message type.
 template<typename T>
 struct messageHandlers {
-    typedef packetio::LambdaPointer<void (T&)> type;
+    typedef packetio::LambdaPointer<void (const T&)> type;
     static type handler;
 };
 
