@@ -55,17 +55,30 @@ class Commands(AsyncCmd):
         """
         Start a test run
         Optionally takes an argument, the number of iterations to run for
+
+        go
+        go <n>
+        go forever
         """
         msg = messages_pb2.PCMessage()
         msg.go.SetInParent()
-        if arg:
-            msg.go.steps = int(arg)
+        if arg == 'forever':
+            msg.go.steps = -1
+        elif arg:
+            try:
+                msg.go.steps = int(arg)
+            except ValueError:
+                print("Invalid argument {!r}".format(arg))
+                return
         self.send(msg)
 
     async def do_stop(self, arg):
         """
-        Abort any active run
+        Abort any active run. Takes no arguments
         """
+        if arg:
+            print("stop takes no argument")
+            return
         msg = messages_pb2.PCMessage()
         msg.stop.SetInParent()
         self.send(msg)
@@ -77,6 +90,7 @@ class Commands(AsyncCmd):
         msg = messages_pb2.PCMessage()
         msg.controller.SetInParent()
         self.send(msg)
+        print("Not really implemented")
 
     async def default(self, line):
         if line == 'EOF':

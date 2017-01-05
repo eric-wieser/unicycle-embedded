@@ -22,8 +22,6 @@
 #include "motors.h"
 #include "encoders.h"
 
-int mode = 'R';
-
 // Kinematic properties
 const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
 const float BELT_RATIO = 40/16;      // rotor rotations per wheel rotation
@@ -45,17 +43,30 @@ enum class LoopPhase {
 };
 LoopPhase phase = LoopPhase::PRE;      // phase of main loop
 
+enum class Mode {
+  CHANGING,
+  IDLE,
+  CONTINUOUS,
+  BULK,
+  MANUAL
+};
 
+volatile Mode mode = Mode::IDLE;
 
-float dx, dy, dz;             // rate gyro readings [degrees per sec]
+// for bulk recording
+const int H_max = 50;      // gives the time horizon or "how many time steps will be measured"
+struct {
+  LogEntry logs[H_max];    //!< log storage
+  size_t n = 0;            //!< total number of steps to run
+  size_t i = 0;            //!< current step number
+  bool data_pending = false; //!< true after a run is complete
+} bulk;
 
-static bool counter = false;   // this Boolean could be controller by a button (to start the experiment)
-static int count = 0;         // variable to keep track of how many measurements have been done
-const int H = 50;             // gives the time horizon or "how many time steps will be measured"
+// for continuous recording
+LogEntry singleLog;
 
-// Storage arrays in same order as in unicycle "doitnlds" file
-
-LogEntry logArray[H];
+// where to save the current data
+LogEntry* currLog = &singleLog;
 
 // Type A timer
 p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
@@ -77,9 +88,8 @@ void __attribute__((interrupt)) mainLoop(void) {
 
   clearIntFlag(_TIMER_1_IRQ);
 
-  if (count == 0) {
-    counter = true;
-  }
+  // if we're changing mode, it's not safe to access any other mode variables
+  if(mode == Mode::CHANGING) return;
 
   //this 5ms window is used for speed measurement
   if (phase == LoopPhase::PRE) {
@@ -124,50 +134,97 @@ void __attribute__((interrupt)) mainLoop(void) {
     float yOrigin = -sin(yaw)*-x_pos + cos(yaw)*-y_pos;
 
     phase = LoopPhase::PRE;
-    if (count >= H) {
-      counter = false;
-      digitalWrite(PIN_LED1, LOW);
-    } // recording only over the time horizon
-    if (counter) {
-      // Data recording starts here!
-      LogEntry& currLog = logArray[count];
-      currLog.droll = droll;         // 1   roll angular velocity
-      currLog.dyaw = dyaw;           // 2   yaw angular velocity
-      currLog.dAngleW = dAngleW;     // 3   Wheel angular velocity
-      currLog.dpitch = dpitch;       // 4   pitch angular velocity
-      currLog.dAngleTT = dAngleTT;   // 5   turn table angular velocity
-      currLog.xOrigin = xOrigin;     // 6   x position of origin in self centered coord
-      currLog.yOrigin = yOrigin;     // 7   y position of origin in self centered coord
-      currLog.roll = roll;           // 8   roll angle
-      currLog.yaw = yaw;             // 9   yaw angle
-      currLog.pitch = pitch;         // 10  pitch angle
-      //currLog.dx;                  // 11  x velocity
-      //currLog.dy;                  // 12  y velocity
-      //currLog.dxOrigin;            // 13  x velocity of origin in self centered coord
-      //currLog.dyOrigin;            // 14  y velocity of origin in self centered coord
-      currLog.x = x_pos;             // 15  x position
-      currLog.y = y_pos;             // 16  y position
-      currLog.AngleW = AngleW;       // 17  wheel angle
-      currLog.AngleTT = AngleTT;     // 18  turn table angle
-      currLog.TurntableInput = policyTurntable(currLog); // 19  control torque for turntable
-      currLog.WheelInput = policyWheel(currLog); // 20  control torque for wheel
-      //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
 
-      // We may need the accelerations for calibrating the start measurements
-      currLog.ddx = ddx;
-      currLog.ddy = ddy;
-      currLog.ddz = ddz;
-
-      count += 1;
+    // choose where to store data
+    currLog = &singleLog;
+    if(mode == Mode::BULK) {
+      if(bulk.i < bulk.n) {
+        currLog = &(bulk.logs[bulk.i++]);
+      }
+      else {
+        mode = Mode::IDLE;
+        bulk.data_pending = true;
+        digitalWrite(PIN_LED1, LOW);
+      }
     }
+
+    // Data recording starts here!
+    LogEntry& l = *currLog;
+    l.droll = droll;         // 1   roll angular velocity
+    l.dyaw = dyaw;           // 2   yaw angular velocity
+    l.dAngleW = dAngleW;     // 3   Wheel angular velocity
+    l.dpitch = dpitch;       // 4   pitch angular velocity
+    l.dAngleTT = dAngleTT;   // 5   turn table angular velocity
+    l.xOrigin = xOrigin;     // 6   x position of origin in self centered coord
+    l.yOrigin = yOrigin;     // 7   y position of origin in self centered coord
+    l.roll = roll;           // 8   roll angle
+    l.yaw = yaw;             // 9   yaw angle
+    l.pitch = pitch;         // 10  pitch angle
+    //l.dx;                  // 11  x velocity
+    //l.dy;                  // 12  y velocity
+    //l.dxOrigin;            // 13  x velocity of origin in self centered coord
+    //l.dyOrigin;            // 14  y velocity of origin in self centered coord
+    l.x = x_pos;             // 15  x position
+    l.y = y_pos;             // 16  y position
+    l.AngleW = AngleW;       // 17  wheel angle
+    l.AngleTT = AngleTT;     // 18  turn table angle
+    l.TurntableInput = policyTurntable(l); // 19  control torque for turntable
+    l.WheelInput = policyWheel(l); // 20  control torque for wheel
+    //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
+
+    // We may need the accelerations for calibrating the start measurements
+    l.ddx = ddx;
+    l.ddy = ddy;
+    l.ddz = ddz;
   } //end of else
+}
+
+void play_starting_noise() {
+  beep(NOTE_G6, 200);
+  delay(50);
+  beep(NOTE_D7, 200);
+  delay(50);
+  beep(NOTE_F7, 200);
+  delay(50);
+  beep(NOTE_FS7, 200);
+  delay(50);
+  beep(NOTE_G7, 450);
 }
 
 // set up the message handlers
 auto on_go = [](const Go& go) {
-  debug("Go!");
+  // default to the maximum number of steps
+  ssize_t n = go.steps;
+  if(n == 0) n = H_max;
+
+  // lock the background loop so we can change mode
+  mode = Mode::CHANGING;
+
+  // compute the new mode
+  Mode target;
+  bulk.i = 0;
+  bulk.data_pending = false;
+  if(n < 0) {
+    bulk.n = 0;
+    target = Mode::CONTINUOUS;
+    debug("Starting continuous mode");
+  }
+  else {
+    bulk.n = n;
+    target = Mode::BULK;
+    debug("Starting bulk mode");
+  }
+
+  play_starting_noise();
+
+  // enter the new mode
+  mode = target;
 };
 auto on_stop = [](const Stop& stop) {
+  mode = Mode::IDLE;
+
+  bulk.i = 0;
+  bulk.n = 0;
   debug("Stop!");
 };
 
@@ -208,21 +265,11 @@ void setup() {
   // delay(100);
 
   delay(2000);
+
+  float dx, dy, dz;
   gyroRead(dx, dy, dz);
-  digitalWrite(PIN_LED1, HIGH);
 
   debug("All done");
-
-  // make a starting noise
-  beep(NOTE_G6, 200);
-  delay(50);
-  beep(NOTE_D7, 200);
-  delay(50);
-  beep(NOTE_F7, 200);
-  delay(50);
-  beep(NOTE_FS7, 200);
-  delay(50);
-  beep(NOTE_G7, 450);
 
   // start the control loop timer
   tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
@@ -237,23 +284,24 @@ void setup() {
   setIntEnable(_TIMER_1_IRQ);
 }
 
-bool done = false;
 void loop() {
   updateMessaging();
 
-  if (counter) {
-    setMotorTurntable(logArray[count-1].TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
-    setMotorWheel(logArray[count-1].WheelInput);            // the counter counts up. Thus the value stored and implemented match
+  if (mode == Mode::CONTINUOUS || mode == Mode::BULK) {
+    setMotorTurntable(currLog->TurntableInput);    // count-1 because at the end of it doing the maths and then storing the value
+    setMotorWheel(currLog->WheelInput);            // the outputEnabled counts up. Thus the value stored and implemented match
   }
   else {
     setMotorTurntable(0);
     setMotorWheel(0);
-
+  }
+  if(bulk.data_pending) {
     // temporary until we get the terminal sending
-    if(count >= H && !done) {
-      debug("Test complete");
-      sendLogs(logArray, H);
-      done = true;
-    }
+    debug("Test complete");
+    sendLogs(bulk.logs, bulk.n);
+    bulk.data_pending = false;
+  }
+  else if(mode == Mode::CONTINUOUS) {
+    sendLogs(&singleLog, 1);
   }
 }
