@@ -15,19 +15,35 @@ from asynccmd import AsyncCmd
 import protobufcolor
 
 def print_and_reprompt(val):
+    """
+    Helps with async printing. If we want to print something while
+    the prompt is active, clear the prompt, print it, then redraw
+    the prompt
+    """
     val = str(val)
     print('\x1b[2K\r',end='')
     print(val)
     readline.redisplay()
 
+async def cancel(task):
+    """ cancel a task and wait for it to finish """
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        return
+    else:
+        raise ValueError("Task finished normally")
+
 async def main():
     with connect() as ser:
         stream = ProtobufStream(COBSStream(ser))
 
-        await asyncio.gather(
-            show_incoming(stream),
-            build_outgoing(stream)
-        )
+        # run the reader until the cmd line is exited, then cancel the reader
+        incoming = asyncio.ensure_future(show_incoming(stream))
+        await build_outgoing(stream)
+        await cancel(incoming)
+
 
 async def show_incoming(reader):
     last_time = time.time()
@@ -54,6 +70,7 @@ async def build_outgoing(writer):
 
 class Commands(AsyncCmd):
     prompt = Style.BRIGHT + "yauc> " + Style.RESET_ALL
+    intro = "Yaw Actuated UniCycle command line interface"
 
     def __init__(self, stream):
         self.stream = stream
@@ -110,6 +127,10 @@ class Commands(AsyncCmd):
             return True
         else:
             await super().default(line)
+
+    async def postloop(self):
+        print("Exiting cli and stopping motors")
+        await self.do_stop('')
 
 colorama.init()
 protobufcolor.init()
