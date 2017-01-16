@@ -10,14 +10,14 @@ import signal
 import collections
 
 import colorama
-from colorama import Fore, Style
 
 import messages_pb2
 import comms
-from asynccmd import AsyncCmd
+from async_helpers import AsyncCmd, async_race, intercept_ctrlc
 import protobufcolor
 import matlabio
 
+# start off by patching readline
 if not hasattr(readline, 'redisplay'):
     if not hasattr(readline, rl):
         raise NotImplementedError("readline.redisplay is missing and can't be patched")
@@ -28,75 +28,71 @@ if not hasattr(readline, 'redisplay'):
     readline.rl.__class__.redisplay = redisplay
     readline.redisplay = redisplay
 
-async def async_race(*futures):
-    done, running = await asyncio.wait(futures, return_when=asyncio.FIRST_COMPLETED)
-    for r in running: r.cancel()
-    return await done.pop()
-
-def print_async(val):
+class CommandsBase(AsyncCmd):
     """
-    Helps with async printing. If we want to print something while
-    the prompt is active, clear the prompt, print it, then redraw
-    the prompt
+    A basic command line, that prints errors in color, and tracks whether to
+    redraw the prompt
     """
-    val = str(val)
-    print('\x1b[2K\r',end='')
-    print(val)
-    readline.redisplay()
 
-def debug(text, async_=False):
-    (print_async if async_ else print)("DEBUG: " + str(text))
+    ERROR_COLOR = colorama.Fore.RED
+    WARN_COLOR = colorama.Fore.YELLOW
+    DEBUG_COLOR = colorama.Fore.BLACK + colorama.Style.BRIGHT
+    INFO_COLOR = ''
 
-def info(text, async_=False):
-    (print_async if async_ else print)(Style.RESET_ALL + str(text))
+    def __init__(self):
+        super().__init__()
+        self._at_prompt = True
 
-def warn(text, async_=False):
-    (print_async if async_ else print)(Fore.YELLOW + str(text))
+    async def onecmd(self, line):
+        self._at_prompt = False
+        try:
+            return await super().onecmd(line)
+        except Exception as e:
+            print(colorama.Style.RESET_ALL + self.ERROR_COLOR, end='')
+            traceback.print_exc()
+        finally:
+            self._at_prompt = True
 
-def error(text, async_=False):
-    (print_async if async_ else print)(Fore.RED + str(text))
-
-async def cancel(task):
-    """ cancel a task and wait for it to finish """
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        return
-    else:
-        raise ValueError("Task finished normally")
-
-async def main():
-    return await Commands().cmdloop()
-
-
-def sig_awaiter(which=signal.SIGINT, exc_type=None):
-    f = asyncio.Future()
-    def handler(sig, frame):
-        if exc_type:
-            f.set_exception(exc_type())
+    def log(self, val, style=''):
+        """
+        Log text to the command line. If the prompt is active, delete it, then
+        redraw it below the printed line
+        """
+        val = colorama.Style.RESET_ALL + style + str(val)
+        if self._at_prompt:
+            print('\x1b[2K\r',end='')
+            print(val)
+            readline.redisplay()
         else:
-            f.set_result(None)
-    def on_done(_):
-        signal.signal(which, old)
-    f.add_done_callback(on_done)
+            print(val)
 
-    old = signal.signal(which, handler)
-    return f
+    def debug(self, text):
+        self.log(text, style=self.DEBUG_COLOR)
+
+    def info(self, text):
+        self.log(text, style=self.INFO_COLOR)
+
+    def warn(self, text):
+        self.log(text, style=self.WARN_COLOR)
+
+    def error(self, text):
+        self.log(text, style=self.ERROR_COLOR)
+
 
 def requires_connection(method):
     """ Takes a method, and wraps it such that it errors if self.stream is None """
     @functools.wraps(method)
     def wrapped(self, *args, **kwargs):
         if not self.stream:
-            error("Not connected")
+            self.error("Not connected")
             return asyncio.sleep(0)
         return method(self, *args, **kwargs)
     return wrapped
 
 
-class Commands(AsyncCmd):
-    prompt = Style.BRIGHT + "yauc> " + Style.RESET_ALL
+
+class Commands(CommandsBase):
+    prompt = colorama.Style.BRIGHT + "yauc> " + colorama.Style.RESET_ALL
     intro = "Yaw Actuated UniCycle command line interface"
 
     def __init__(self):
@@ -110,28 +106,15 @@ class Commands(AsyncCmd):
 
         self.awaited_log_bundle = None
 
-        self.at_prompt = True
-
-
-    async def onecmd(self, line):
-        self.at_prompt = False
-        try:
-            return await super().onecmd(line)
-        except Exception as e:
-            print(Fore.RED, end='')
-            traceback.print_exc()
-        finally:
-            self.at_prompt = True
-
     def send(self, msg):
         self.stream.write(msg)
-        # info("Sent {!r}".format(msg))
+        # self.info("Sent {!r}".format(msg))
 
     async def recv_single(self, val):
         """ handle a single incoming packet """
         which = val.WhichOneof('msg')
         if which == 'debug':
-            debug(val.debug.s, async_=self.at_prompt)
+            self.debug(val.debug.s)
             return
 
         elif which == 'log_bundle':
@@ -139,7 +122,7 @@ class Commands(AsyncCmd):
             if self.awaited_log_bundle:
                 self.awaited_log_bundle.set_result(val)
             else:
-                warn("Unexpected logs")
+                self.warn("Unexpected logs")
 
         elif which == 'single_log':
             val = val.single_log
@@ -148,10 +131,10 @@ class Commands(AsyncCmd):
             if this_time - self.log_last_printed < 0.5:
                 return
             self.log_last_printed = this_time
-            info(val, async_=self.at_prompt)
+            self.info(val)
 
         else:
-            info(val, async_=self.at_prompt)
+            self.info(val)
 
     async def recv_incoming_task(self):
         try:
@@ -159,13 +142,13 @@ class Commands(AsyncCmd):
                 try:
                     val = await self.stream.read()
                 except comms.CommsError as e:
-                    error(e, async_=self.at_prompt)
+                    self.error(e)
                     continue
 
                 await self.recv_single(val)
 
         except comms.SerialException as e:
-            error("Connection lost", async_=self.at_prompt)
+            self.error("Connection lost")
             self.stream = None
             if self.awaited_log_bundle:
                 self.awaited_log_bundle.set_exception(e)
@@ -174,7 +157,7 @@ class Commands(AsyncCmd):
 
     async def run_connect(self):
         if self.stream:
-            warn("Already connected")
+            self.warn("Already connected")
             return
 
         ser = comms.connect()
@@ -186,7 +169,7 @@ class Commands(AsyncCmd):
 
     async def run_disconnect(self):
         if not self.stream:
-            warn("Already disconnected")
+            self.warn("Already disconnected")
 
         try:
             await self.run_stop()
@@ -207,10 +190,11 @@ class Commands(AsyncCmd):
         msg.go.steps = steps if not forever else -1
         self.send(msg)
 
-
         if forever:
-            await sig_awaiter(signal.SIGINT)
-            await self.run_stop()
+            try:
+                await intercept_ctrlc()
+            except KeyboardInterrupt:
+                await self.run_stop()
             return
 
         # prepare to recieve the logs
@@ -223,7 +207,7 @@ class Commands(AsyncCmd):
 
                 # reconnect when possible
                 if not self.stream:
-                    info("Reconnecting")
+                    self.info("Reconnecting")
                     while True:
                         try:
                             await self.run_connect()
@@ -231,10 +215,10 @@ class Commands(AsyncCmd):
                             await asyncio.sleep(1)
                         else:
                             break
-                    info("Success!")
+                    self.info("Success!")
 
                 # ask for logs
-                info('Asking for logs')
+                self.info('Asking for logs')
                 self.awaited_log_bundle = asyncio.Future()
                 try:
                     self.send(msg)
@@ -243,7 +227,7 @@ class Commands(AsyncCmd):
                     continue
 
                 # await a result
-                info('Waiting for reply')
+                self.info('Waiting for reply')
                 try:
                     res = await self.awaited_log_bundle
                 except comms.SerialException:
@@ -256,16 +240,17 @@ class Commands(AsyncCmd):
                     return res
 
         try:
-            val = await async_race(get_logs(), sig_awaiter(exc_type=KeyboardInterrupt))
+            val = await async_race(get_logs(), intercept_ctrlc())
         except KeyboardInterrupt:
-            info('Cancelled')
+            self.info('Cancelled')
             await self.run_stop()
         else:
-            info('Success')
+            self.info('Success')
             target = self.log_saver.save(val)
-            info('Saved to {}'.format(target))
+            self.info('Saved to {}'.format(target))
 
     async def run_stop(self):
+        if not self.stream: return
         msg = messages_pb2.PCMessage()
         msg.stop.SetInParent()
         self.send(msg)
@@ -283,9 +268,9 @@ class Commands(AsyncCmd):
         try:
             return self.run_connect()
         except comms.NoArduinoFound:
-            error("Robot not found")
+            self.error("Robot not found")
         except comms.ArduinoConnectionFailed as e:
-            error("Connecting to the arduino on {} failed".format(e.port))
+            self.error("Connecting to the arduino on {} failed".format(e.port))
         return asyncio.sleep(0)
 
     def do_disconnect(self, arg):
@@ -354,13 +339,5 @@ if os.name == 'nt':
 else:
     loop = asyncio.get_event_loop()
 
-# def ask_exit(signame):
-#     print("got signal %s: exit" % signame)
-#     loop.stop()
-
-# loop = asyncio.get_event_loop()
-# for signame in ('SIGINT', 'SIGTERM'):
-#     loop.add_signal_handler(getattr(signal, signame),
-#                             functools.partial(ask_exit, signame))
-loop.run_until_complete(main())
+loop.run_until_complete(Commands().cmdloop())
 loop.close()
