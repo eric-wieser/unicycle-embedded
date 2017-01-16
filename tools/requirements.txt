@@ -4,3 +4,5 @@
 serial ~= 3.2
 protobuf ~= 3.1
 cobs ~= 1.0      # this is a little tricky to install on windows
+numpy
+scipy
