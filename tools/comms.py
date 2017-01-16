@@ -5,13 +5,31 @@ import serial
 import serial.tools.list_ports
 from cobs import cobs
 from google.protobuf.message import DecodeError
+from serial import SerialException
 
 import messages_pb2
 
 SERIAL_NO = 'A5004HJMA'  # serial number of the microchip, used to find COm port
 BAUD_RATE = 57600
 
+class StreamWrapper:
+    def __init__(self, _conn):
+        self._conn = _conn
+
+    def close(self):
+        self._conn.close()
+
+    def __enter__(self): return self
+    def __exit__(self, exc_type, exc_val, exc_tb): self.close()
+
 class CommsError(ValueError): pass
+
+class NoArduinoFound(Exception): pass
+
+class ArduinoConnectionFailed(Exception):
+    def __init__(self, port):
+        super().__init__(port)
+        self.port = port
 
 class AsyncSerial(serial.Serial):
     """ Simple wrapper of Serial, that provides an async api """
@@ -26,13 +44,13 @@ class AsyncSerial(serial.Serial):
         return super().read(n)
 
 
-class COBSStream:
+class COBSStream(StreamWrapper):
     """
     Wraps an object with an async read, and emits packets
     decoded using COBS
     """
     def __init__(self, conn):
-        self._conn = conn
+        super().__init__(conn)
         self._pending_bytes = b""
         self._pending_packets = collections.deque()
 
@@ -58,15 +76,11 @@ class COBSStream:
 
     def write_packet(self, packet):
         raw = cobs.encode(packet) + b'\0'
-        print("Wrote {!r}".format(raw))
         self._conn.write(raw)
         self._conn.flush()
 
 
-class ProtobufStream:
-    def __init__(self, _conn):
-        self._conn = _conn
-
+class ProtobufStream(StreamWrapper):
     async def read(self) -> messages_pb2.RobotMessage:
         data = await self._conn.read_packet()
         try:
@@ -87,6 +101,9 @@ def connect(serial_no=SERIAL_NO, baud=BAUD_RATE) -> AsyncSerial:
             if p.serial_number == serial_no
         )
     except StopIteration:
-        raise IOError("No Arduino found") from None
+        raise NoArduinoFound from None
 
-    return AsyncSerial(arduino_port, baudrate=baud)
+    try:
+        return AsyncSerial(arduino_port, baudrate=baud)
+    except SerialException as e:
+        raise ArduinoConnectionFailed(arduino_port)
