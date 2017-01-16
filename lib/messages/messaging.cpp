@@ -92,6 +92,7 @@ namespace {
             case PCMessage_controller_tag: messageHandlers<SetController>::handler.operator ()(message.msg.controller); return;
             case PCMessage_go_tag:         messageHandlers<Go>::handler.operator ()(message.msg.go); return;
             case PCMessage_stop_tag:       messageHandlers<Stop>::handler.operator ()(message.msg.stop); return;
+            case PCMessage_get_logs_tag:   messageHandlers<GetLogs>::handler.operator ()(message.msg.get_logs); return;
             default:
                 debug("Message type unknown");
                 debug(reinterpret_cast<char*>(data), n);
@@ -142,15 +143,25 @@ void debug(const char* text, size_t n) {
 }
 
 //! send log messages
-void sendLogs(const LogEntry* entries, size_t n) {
+void sendLogBundle(const LogEntry* entries, size_t n) {
     array_handle<const LogEntry> arr = {entries, n};
 
     // fill out the message
     RobotMessage message = RobotMessage_init_zero;
-    message.which_msg = RobotMessage_log_tag;
-    message.msg.log.entries.funcs.encode = &write_array<const LogEntry, LogEntry_fields>;
-    message.msg.log.entries.arg = &arr;
+    message.which_msg = RobotMessage_log_bundle_tag;
+    message.msg.log_bundle.entry.funcs.encode = &write_array<const LogEntry, LogEntry_fields>;
+    message.msg.log_bundle.entry.arg = &arr;
 
+    sendMessage(message);
+}
+
+//! send log messages
+void sendLog(const LogEntry& entry) {
+
+    // fill out the message
+    RobotMessage message = RobotMessage_init_zero;
+    message.which_msg = RobotMessage_single_log_tag;
+    message.msg.single_log = entry;
     sendMessage(message);
 }
 
@@ -158,3 +169,4 @@ template <typename T> typename messageHandlers<T>::type messageHandlers<T>::hand
 template messageHandlers<Go>::type messageHandlers<Go>::handler;
 template messageHandlers<Stop>::type messageHandlers<Stop>::handler;
 template messageHandlers<SetController>::type messageHandlers<SetController>::handler;
+template messageHandlers<GetLogs>::type messageHandlers<GetLogs>::handler;

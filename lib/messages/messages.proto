@@ -1,11 +1,14 @@
 syntax = "proto3";
 
+
+// Messages from PC to robot:
 message Go {
   int32 steps = 1;
 }
 message Stop {
 }
-
+message GetLogs {
+}
 
 message LinearPolicy {
   float k_bias     =  1; // constant bias
@@ -32,9 +35,11 @@ message PCMessage {
     Go go = 1;
     Stop stop = 2;
     SetController controller = 3;
+    GetLogs get_logs = 4;
   }
 }
 
+// Messages from robot to PC
 message LogEntry {
   float droll          =  1; // roll angular velocity
   float dyaw           =  2; // yaw angular velocity
@@ -63,8 +68,8 @@ message LogEntry {
   float ddz = 23;
 };
 
-message LogMessage {
-  repeated LogEntry entries = 1;
+message LogBundle {
+  repeated LogEntry entry = 1;
 }
 
 message DebugMessage {
@@ -73,7 +78,8 @@ message DebugMessage {
 
 message RobotMessage {
   oneof msg {
-    LogMessage log = 1;
+    LogBundle log_bundle = 1;
     DebugMessage debug = 2;
+    LogEntry single_log = 3;
   }
 }

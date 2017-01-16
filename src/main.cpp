@@ -60,11 +60,13 @@ struct {
   LogEntry logs[H_max];    //!< log storage
   size_t n = 0;            //!< total number of steps to run
   size_t i = 0;            //!< current step number
-  bool data_pending = false; //!< true after a run is complete
+  bool run_complete = false; //!< true after a run is complete
+  bool run_complete_main = false; //!< true once the main thread has seen the run complete
 } bulk;
 
 // for continuous recording
 LogEntry singleLog;
+bool singleLogPending = false;
 
 // where to save the current data
 LogEntry* currLog = &singleLog;
@@ -191,7 +193,7 @@ void __attribute__((interrupt)) mainLoop(void) {
       else {
         mode = Mode::IDLE;
         digitalWrite(PIN_LED1, LOW);
-        bulk.data_pending = true;
+        bulk.run_complete = true;
       }
     }
     state_tracker.update(*currLog);
@@ -204,6 +206,9 @@ void __attribute__((interrupt)) mainLoop(void) {
       setMotorTurntable(0);
       setMotorWheel(0);
     }
+
+    if(currLog == &singleLog)
+      singleLogPending = true;
   }
 }
 
@@ -236,7 +241,7 @@ auto on_go = [](const Go& go) {
   // compute the new mode
   Mode target;
   bulk.i = 0;
-  bulk.data_pending = false;
+  bulk.run_complete = false;
   if(n < 0) {
     bulk.n = 0;
     target = Mode::CONTINUOUS;
@@ -262,6 +267,16 @@ auto on_stop = [](const Stop& stop) {
   bulk.n = 0;
   debug("Stop!");
 };
+auto on_get_logs = [](const GetLogs& getLogs) {
+  if(bulk.run_complete) {
+    debug("Sending test data");
+    sendLogBundle(bulk.logs, bulk.n);
+  }
+  else {
+    debug("No data yet");
+    sendLogBundle(bulk.logs, 0);
+  }
+};
 
 // main function to setup the test
 void setup() {
@@ -271,6 +286,7 @@ void setup() {
   onMessage<Go>(&on_go);
   onMessage<Stop>(&on_stop);
   onMessage<SetController>(setPolicy);
+  onMessage<GetLogs>(&on_get_logs);
 
   pinMode(PIN_LED1, OUTPUT);
   digitalWrite(PIN_LED1, LOW);
@@ -322,13 +338,15 @@ void setup() {
 void loop() {
   updateMessaging();
 
-  if(bulk.data_pending) {
-    // temporary until we get the terminal sending
-    debug("Test complete");
-    sendLogs(bulk.logs, bulk.n);
-    bulk.data_pending = false;
+  // this can't be sent in an interrupt handler
+  if(singleLogPending && mode == Mode::CONTINUOUS) {
+    sendLog(singleLog);
+    singleLogPending = false;
   }
-  else if(mode == Mode::CONTINUOUS) {
-    sendLogs(&singleLog, 1);
+
+  // log that the test was complete
+  if(bulk.run_complete && !bulk.run_complete_main) {
+    debug("Test completed");
   }
+  bulk.run_complete_main = bulk.run_complete;
 }
