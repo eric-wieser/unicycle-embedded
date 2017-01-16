@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <p32_defs.h>
 #include "chipkit_patch.h"
+#include <messaging.h>
 
 // pin definitions
 const uint8_t TT_DIR_PIN = 39;
@@ -82,6 +83,17 @@ void setupEncoders() {
   tmr4.tmxTmr.reg = 0;
   tmr4.tmxPr.reg = 0xffff;
   tmr4.tmxCon.set = TBCON_ON;
+}
+
+void resetEncoders() {
+  // clearIntEnable(_CHANGE_NOTICE_IRQ);
+  // // TMR3sign = 1;
+  // // TMR4sign = 1;
+  // // tmr4.tmxTmr.reg = 0;
+  // // tmr3.tmxTmr.reg = 0;
+  // // setIntEnable(_CHANGE_NOTICE_IRQ);
+  // // 
+  // setupEncoders();
 }
 
 int16_t getTTangle() {
