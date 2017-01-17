@@ -36,11 +36,11 @@ def dtype_for(msg_type):
 def field_values(msg):
     return tuple(getattr(msg, f.name) for f in msg.DESCRIPTOR.fields)
 
-def log_to_np(log):
+def repeated_submessage_to_np(type, msg):
     return np.core.records.fromrecords([
         field_values(e)
-        for e in log.entry
-    ], dtype=dtype_for(messages_pb2.LogEntry))
+        for e in msg
+    ], dtype=dtype_for(type))
 
 base = Path('..')
 
@@ -53,12 +53,12 @@ class LogSaver:
         )
         self.log_count = 0
 
-    def save(self, log):
+    def save(self, logs):
         if self.log_count == 0:
             self.logs_dir.mkdir()
 
         fpath = (self.logs_dir / '{}.mat'.format(self.log_count))
-        log = log_to_np(log)
+        log = repeated_submessage_to_np(messages_pb2.LogEntry, logs)
         with fpath.open('wb') as f:
             scipy.io.savemat(f, dict(log=log, tstamp=datetime.now().isoformat()))
 

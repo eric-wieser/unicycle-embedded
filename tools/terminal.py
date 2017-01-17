@@ -66,6 +66,9 @@ class CommandsBase(AsyncCmd):
         else:
             print(val)
 
+    async def get_input(self):
+        return await async_race(super().get_input(), intercept_ctrlc())
+
     def debug(self, text):
         self.log(text, style=self.DEBUG_COLOR)
 
@@ -105,6 +108,7 @@ class Commands(CommandsBase):
         self.log_saver = matlabio.LogSaver()
 
         self.awaited_log_bundle = None
+        self.log_queue = None
 
     def send(self, msg):
         self.stream.write(msg)
@@ -127,11 +131,15 @@ class Commands(CommandsBase):
         elif which == 'single_log':
             val = val.single_log
 
+            if self.log_queue is not None:
+                self.log_queue.append(val)
+
             this_time = time.time()
             if this_time - self.log_last_printed < 0.5:
                 return
             self.log_last_printed = this_time
             self.info(val)
+
 
         else:
             self.info(val)
@@ -191,12 +199,26 @@ class Commands(CommandsBase):
         self.send(msg)
 
         if forever:
-            try:
-                await intercept_ctrlc()
-            except KeyboardInterrupt:
-                await self.run_stop()
-            return
+            await self.handle_go_forever_response()
 
+        else:
+            await self.handle_go_response()
+
+    async def handle_go_forever_response(self):
+        self.log_queue = q = []
+
+        try:
+            await intercept_ctrlc()
+        except KeyboardInterrupt:
+            self.log_queue = None
+            await self.run_stop()
+        finally:
+            target = self.log_saver.save(q)
+            self.info('Saved {} records to {}'.format(len(q), target))
+
+        return
+
+    async def handle_go_response(self):
         # prepare to recieve the logs
         get_logs_msg = messages_pb2.PCMessage()
         msg.get_logs.SetInParent()
@@ -237,7 +259,7 @@ class Commands(CommandsBase):
                     self.awaited_log_bundle = None
 
                 if res.entry:
-                    return res
+                    return res.entry
 
         try:
             val = await async_race(get_logs(), intercept_ctrlc())
