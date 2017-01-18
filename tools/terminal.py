@@ -220,7 +220,7 @@ class Commands(CommandsBase):
 
     async def handle_go_response(self):
         # prepare to recieve the logs
-        get_logs_msg = messages_pb2.PCMessage()
+        msg = messages_pb2.PCMessage()
         msg.get_logs.SetInParent()
 
         async def get_logs():
