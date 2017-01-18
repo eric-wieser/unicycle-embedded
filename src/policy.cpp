@@ -37,7 +37,7 @@ namespace {
 
 		// iterate over the pairs of members defined in fields
 		for(const field_pair* fp = fields; *fp; fp++) {
-			result += policy.*(fp->policy) + state.*(fp->state);
+			result += policy.*(fp->policy) * state.*(fp->state);
 		}
 		return result;
 	}
