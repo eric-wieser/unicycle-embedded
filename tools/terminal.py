@@ -285,15 +285,14 @@ class Commands(CommandsBase):
 
     # next come the command parsers
 
-    def do_connect(self, arg):
+    async def do_connect(self, arg):
         """ Connect to the robot """
         try:
-            return self.run_connect()
+            return await self.run_connect()
         except comms.NoArduinoFound:
             self.error("Robot not found")
         except comms.ArduinoConnectionFailed as e:
             self.error("Connecting to the arduino on {} failed".format(e.port))
-        return asyncio.sleep(0)
 
     def do_disconnect(self, arg):
         """ Connect to the robot """
