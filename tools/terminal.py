@@ -350,6 +350,17 @@ class Commands(CommandsBase):
         print("Exiting cli and stopping motors")
         await self.run_disconnect()
 
+
+def enable_win_unicode_console():
+    if sys.version_info >= (3, 6):
+        # Since PEP 528, Python uses the unicode APIs for the Windows
+        # console by default, so WUC shouldn't be needed.
+        return
+
+    import win_unicode_console
+    win_unicode_console.enable()
+
+enable_win_unicode_console()
 colorama.init()
 protobufcolor.init()
 
