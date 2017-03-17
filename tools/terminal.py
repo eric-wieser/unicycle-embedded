@@ -301,7 +301,7 @@ class Commands(CommandsBase):
 
 
     @requires_connection
-    def do_go(self, arg):
+    async def do_go(self, arg):
         """
         Start a test run
         Optionally takes an argument, the number of iterations to run for
@@ -311,33 +311,33 @@ class Commands(CommandsBase):
         go forever
         """
         if arg == 'forever':
-            return self.run_go(forever=True)
+            await self.run_go(forever=True)
         elif arg:
             try:
                 steps = int(arg)
             except ValueError:
                 print("Invalid argument {!r}".format(arg))
             else:
-                return self.run_go(steps)
+                await self.run_go(steps)
         else:
-            return self.run_go()
+            await self.run_go()
 
     @requires_connection
-    def do_stop(self, arg):
+    async def do_stop(self, arg):
         """
         Abort any active run. Takes no arguments
         """
         if arg:
             self.error("stop takes no argument")
             return
-        return self.run_stop()
+        await self.run_stop()
 
     @requires_connection
-    def do_policy(self, args):
+    async def do_policy(self, args):
         """
         Set the policy, from a mat file
         """
-        return self.run_policy()
+        await self.run_policy()
 
     # finally come the hooks for the parser
 
@@ -345,7 +345,7 @@ class Commands(CommandsBase):
         if line == 'EOF':
             return True
         else:
-            await super().default(line)
+            return await super().default(line)
 
     async def postloop(self):
         print("Exiting cli and stopping motors")
