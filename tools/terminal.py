@@ -199,10 +199,12 @@ class Commands(CommandsBase):
         self.send(msg)
 
         if forever:
-            await self.handle_go_forever_response()
-
+            fname, steps = await self.handle_go_forever_response()
         else:
-            await self.handle_go_response()
+            fname, steps = await self.handle_go_response()
+
+        self.info('Saved rollout of {} steps to {}'.format(steps, fname))
+
 
     async def handle_go_forever_response(self):
         self.log_queue = q = []
@@ -212,11 +214,9 @@ class Commands(CommandsBase):
         except KeyboardInterrupt:
             self.log_queue = None
             await self.run_stop()
-        finally:
-            target = self.log_saver.save(q)
-            self.info('Saved {} records to {}'.format(len(q), target))
 
-        return
+        target = self.log_saver.save(q)
+        return target, len(q)
 
     async def handle_go_response(self):
         # prepare to recieve the logs
@@ -266,10 +266,11 @@ class Commands(CommandsBase):
         except KeyboardInterrupt:
             self.info('Cancelled')
             await self.run_stop()
-        else:
-            self.info('Success')
-            target = self.log_saver.save(val)
-            self.info('Saved to {}'.format(target))
+            raise
+
+        self.info('Success')
+        target = self.log_saver.save(val)
+        return target, len(val)
 
     async def run_stop(self):
         if not self.stream: return
