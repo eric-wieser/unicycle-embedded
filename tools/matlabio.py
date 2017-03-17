@@ -60,7 +60,34 @@ class LogSaver:
         fpath = (self.logs_dir / '{}.mat'.format(self.log_count))
         log = repeated_submessage_to_np(messages_pb2.LogEntry, logs)
         with fpath.open('wb') as f:
-            scipy.io.savemat(f, dict(log=log, tstamp=datetime.now().isoformat()))
+            scipy.io.savemat(f, dict(msg=log, tstamp=datetime.now().isoformat()))
 
         self.log_count += 1
         return fpath
+
+
+def _apply_to_msg(msg, np_array):
+    """
+    Take a message, and a numpy array loaded from a .mat file, and update the
+    fields in the message.
+
+    The fieldnames should match exactly, and the file must have been loaded with
+    squeeze_me=True.
+
+    Only works for scalar structs right now - no arrays
+    """
+    for field_name in np_array.dtype.fields:
+        field_val = np_array[field_name]
+        field_val = field_val[()]  # squeeze_me doesn't squeeze 0d to scalar
+
+        # recurse nested fields
+        if isinstance(field_val, np.ndarray):
+            _apply_to_msg(getattr(msg, field_name), field_val)
+        # directly set other ones
+        else:
+            setattr(msg, field_name, field_val)
+    return msg
+
+def load_policy(mat_file_name):
+    msg = scipy.io.loadmat(mat_file_name, squeeze_me=True)['msg']
+    return _apply_to_msg(messages_pb2.SetController(), msg)

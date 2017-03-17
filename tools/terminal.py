@@ -279,11 +279,12 @@ class Commands(CommandsBase):
         msg.stop.SetInParent()
         self.send(msg)
 
-    async def run_policy(self):
+    async def run_policy(self, matfile):
         msg = messages_pb2.PCMessage()
         msg.controller.SetInParent()
+        msg.controller.CopyFrom(matlabio.load_policy(matfile))
+        print(msg)
         self.send(msg)
-        print("Not really implemented")
 
     # next come the command parsers
 
@@ -334,11 +335,14 @@ class Commands(CommandsBase):
         await self.run_stop()
 
     @requires_connection
-    async def do_policy(self, args):
+    async def do_policy(self, arg):
         """
         Set the policy, from a mat file
         """
-        await self.run_policy()
+        if not arg:
+            self.error('No file specified')
+            return
+        await self.run_policy(matfile=arg)
 
     # finally come the hooks for the parser
 
