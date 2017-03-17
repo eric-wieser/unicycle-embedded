@@ -198,6 +198,7 @@ void __attribute__((interrupt)) mainLoop(void) {
     }
     state_tracker.update(*currLog);
 
+    // update the motor outputs
     if (mode == Mode::CONTINUOUS || mode == Mode::BULK) {
       setMotorTurntable(currLog->TurntableInput);
       setMotorWheel(currLog->WheelInput);
@@ -207,6 +208,7 @@ void __attribute__((interrupt)) mainLoop(void) {
       setMotorWheel(0);
     }
 
+    // instruct the main thread to send a message
     if(currLog == &singleLog)
       singleLogPending = true;
   }

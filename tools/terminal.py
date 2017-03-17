@@ -145,6 +145,7 @@ class Commands(CommandsBase):
             self.info(val)
 
     async def recv_incoming_task(self):
+        """ A background task to be run that receives incoming packets """
         try:
             while self.stream:
                 try:
