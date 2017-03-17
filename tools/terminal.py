@@ -316,7 +316,7 @@ class Commands(CommandsBase):
             try:
                 steps = int(arg)
             except ValueError:
-                print("Invalid argument {!r}".format(arg))
+                self.error("Invalid argument {!r}".format(arg))
             else:
                 await self.run_go(steps)
         else:
