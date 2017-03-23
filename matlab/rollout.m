@@ -76,12 +76,12 @@ function [z, u] = get_from_logs(msg, plant)
   for z_name = fieldnames(z_name_map)', z_name = z_name{1};
     z_frame_name = z_name_map.(z_name);
     z_index = plant.out_frame.i.(z_frame_name);
-    z(:,z_index) = msg.(z_name);
+    z(:,z_index) = [msg.(z_name)];
   end
   for u_name = fieldnames(u_name_map)', u_name = u_name{1};
     u_frame_name = u_name_map.(u_name);
     u_index = plant.in_frame.i.(u_frame_name);
-    u(:,u_index) = msg.(u_name);
+    u(:,u_index) = [msg.(u_name)];
   end
   u = u(1:end-1,:);  % truncate the last unused action
 end
