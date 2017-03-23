@@ -11,9 +11,9 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   save_msg(ctrl_file, ctrl_msg);
 
   % load rollout data from robot
-  [log_file, path] = uigetfile('*.mat', ...
+  log_file = uigetfullfile('*.mat', ...
     'Load rollout logs', logs_dir);
-  log_msg = load_msg(fullfile(path, log_file));
+  log_msg = load_msg(log_file);
 
 
   [z, u] = get_from_logs(log_msg, plant);
@@ -28,6 +28,16 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   traj.action = u;
   traj.loss = L;
   traj.dt = plant.dt;
+end
+
+function f = uigetfullfile(varargin)
+  [f, path] = uigetfile(varargin{:});
+  f = fullfile(path, f);
+end
+
+function f = uiputfullfile(varargin)
+  [f, path] = uiputfile(varargin{:});
+  f = fullfile(path, f);
 end
 
 function msg = load_msg(fname)
