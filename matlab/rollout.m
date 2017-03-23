@@ -11,12 +11,11 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   save_msg(ctrl_file, ctrl_msg);
 
   % load rollout data from robot
-  log_file = uigetfullfile('*.mat', ...
-    'Load rollout logs', logs_dir);
+  log_file = uigetfullfile('*.mat', 'Load rollout logs', logs_dir);
   log_msg = load_msg(log_file);
-
-
   [z, u] = get_from_logs(log_msg, plant);
+
+  % evaluate the loss function, exactly as we would in normal rollout
   D = ctrl.D;
   for i = 1:size(z,1)
      L(i) = cost.fcn(struct('m',z(1,1:D)')).m;
@@ -86,6 +85,29 @@ function [z, u] = get_from_logs(msg, plant)
   u = u(1:end-1,:);  % truncate the last unused action
 end
 
+function pol = get_linear_policy(ctrl)
+  %% Produce a linear policy from the given controller
+  % We assume that there is a @gSat term that means the policy aims to produce
+  % control outputs in [-1, 1]
+  z_frame = ctrl.in_frame;
+  u_frame = ctrl.out_frame;
+  if isa(ctrl, 'CtrlRandom')
+    % make up some reasonable policy, unless we deside that random inputs are
+    % desirable, and implement them on the hardware
+    zE = z_frame.units;
+    uE = u_frame.units;
+
+    pol.b = u_frame.zeros;
+    pol.w = zE.pitch' .* uE.cw *  1 / deg2rad(45) ...
+          + zE.dyaw'  .* uE.ct * -1 / deg2rad(90);
+  else
+    pol = ctrl.policy.p;
+    if ~hasfield(pol, 'b') || ~hasfield(pol, 'w')
+      error('Expected a linear policy type')
+    end
+  end
+end
+
 function msg = make_ctrl_msg(ctrl)
   %OUTPUT_CTRL_CONFIG  Convert the policy to a struct matching the protobuf
   %                    message
@@ -114,8 +136,7 @@ function msg = make_ctrl_msg(ctrl)
   assert(isequal(sort(fieldnames(p_name_map)), sort(p_frame.names)));
   assert(isequal(sort(fieldnames(u_name_map)), sort(u_frame.names)));
 
-
-  pol = ctrl.policy.p;
+  pol = get_linear_policy(ctrl);
 
   for u_name = fieldnames(u_name_map)', u_name = u_name{1};
     u_index = u_frame.i.(u_name);
@@ -131,6 +152,4 @@ function msg = make_ctrl_msg(ctrl)
       msg.(u_proto_name).(p_proto_name) = pol.w(u_index, p_index);
     end
   end
-
 end
-
