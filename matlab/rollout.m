@@ -3,12 +3,12 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   root_dir = fileparts(fileparts(this_file));
   logs_dir = fullfile(root_dir, 'logs');
 
-
   % save policy params to mat file to load onto robot
   ctrl_msg = make_ctrl_msg(ctrl);
-  [ctrl_file, path] = uiputfile('*.mat', ...
-    'Save controller message', fullfile(logs_dir, 'ctrl.mat'));
-  save_msg(fullfile(path, ctrl_file), ctrl_msg);
+  ctrl_file = fullfile(root_dir, 'ctrl.mat');
+  % ctrl_file = uiputfullfile('*.mat', ...
+  %   'Save controller message', fullfile(logs_dir, 'ctrl.mat'));
+  save_msg(ctrl_file, ctrl_msg);
 
   % load rollout data from robot
   [log_file, path] = uigetfile('*.mat', ...
