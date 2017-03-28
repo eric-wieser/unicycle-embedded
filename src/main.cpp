@@ -17,6 +17,7 @@
 
 // Local includes
 #include "io.h"
+#include "pins.h"
 #include "policy.h"
 #include "intAngVel.h"
 #include "gyroAccel.h"
@@ -193,7 +194,7 @@ void __attribute__((interrupt)) mainLoop(void) {
       }
       else {
         mode = Mode::IDLE;
-        digitalWrite(PIN_LED1, LOW);
+        digitalWrite(pins::LED, LOW);
         bulk.run_complete = true;
       }
     }
@@ -260,11 +261,11 @@ auto on_go = [](const Go& go) {
 
   // enter the new mode
   mode = target;
-  digitalWrite(PIN_LED1, HIGH);
+  digitalWrite(pins::LED, HIGH);
 };
 auto on_stop = [](const Stop& stop) {
   mode = Mode::IDLE;
-  digitalWrite(PIN_LED1, LOW);
+  digitalWrite(pins::LED, LOW);
 
   bulk.i = 0;
   bulk.n = 0;
@@ -291,8 +292,10 @@ void setup() {
   onMessage<SetController>(setPolicy);
   onMessage<GetLogs>(&on_get_logs);
 
-  pinMode(PIN_LED1, OUTPUT);
-  digitalWrite(PIN_LED1, LOW);
+  pinMode(pins::LED, OUTPUT);
+  digitalWrite(pins::LED, LOW);
+
+  pinMode(pins::SWITCH, INPUT_PULLUP);
 
   //srand(54321);
 
