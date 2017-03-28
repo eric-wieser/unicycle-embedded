@@ -4,13 +4,13 @@
 // static variables
 namespace {
   //output compare
-  volatile p32_oc& oc1 = *reinterpret_cast<volatile p32_oc*>(_OCMP1_BASE_ADDRESS);
-  volatile p32_oc& oc2 = *reinterpret_cast<volatile p32_oc*>(_OCMP2_BASE_ADDRESS);
-  volatile p32_oc& oc3 = *reinterpret_cast<volatile p32_oc*>(_OCMP3_BASE_ADDRESS);
-  volatile p32_oc& oc4 = *reinterpret_cast<volatile p32_oc*>(_OCMP4_BASE_ADDRESS);
+  p32_oc& oc1 = *reinterpret_cast<p32_oc*>(_OCMP1_BASE_ADDRESS);
+  p32_oc& oc2 = *reinterpret_cast<p32_oc*>(_OCMP2_BASE_ADDRESS);
+  p32_oc& oc3 = *reinterpret_cast<p32_oc*>(_OCMP3_BASE_ADDRESS);
+  p32_oc& oc4 = *reinterpret_cast<p32_oc*>(_OCMP4_BASE_ADDRESS);
 
   // timer used for pwm
-  volatile p32_timer& tmr2 = *reinterpret_cast<volatile p32_timer*>(_TMR2_BASE_ADDRESS);
+  p32_timer& tmr2 = *reinterpret_cast<p32_timer*>(_TMR2_BASE_ADDRESS);
 
   void __attribute__((interrupt)) handlePWMTimer(void) {
     // The timer 2 is currently not in use (doesn't do anything)
@@ -49,7 +49,7 @@ void setMotorWheel(float cmd) {
 }
 
 void setupMotors() {
-  volatile p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
+  p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
 
   for(int i = 0; i < 4; i++) {
     // Turn off the OC when performing the setup

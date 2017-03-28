@@ -72,7 +72,7 @@ bool singleLogPending = false;
 LogEntry* currLog = &singleLog;
 
 // Type A timer
-volatile p32_timer& tmr1 = *reinterpret_cast<volatile p32_timer*>(_TMR1_BASE_ADDRESS);
+p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
 
 //! handles computing the overall state
 struct StateTracker {

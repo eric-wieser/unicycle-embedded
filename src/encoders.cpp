@@ -10,11 +10,11 @@ const uint8_t W_DIR_PIN = 47;
 // static variables
 namespace {
   // Type B timers
-  volatile p32_timer& tmr3 = *reinterpret_cast<volatile p32_timer*>(_TMR3_BASE_ADDRESS);
-  volatile p32_timer& tmr4 = *reinterpret_cast<volatile p32_timer*>(_TMR4_BASE_ADDRESS);
+  p32_timer& tmr3 = *reinterpret_cast<p32_timer*>(_TMR3_BASE_ADDRESS);
+  p32_timer& tmr4 = *reinterpret_cast<p32_timer*>(_TMR4_BASE_ADDRESS);
 
   //change notifier
-  volatile p32_cn& cn = *reinterpret_cast<volatile p32_cn*>(_CN_BASE_ADDRESS);
+  p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
 
   volatile int TMR3sign = 1;             // sign of the value in TMR3
   volatile int TMR4sign = 1;             // sign of the value in TMR4
