@@ -1,16 +1,17 @@
 #include <Arduino.h>
 #include <p32_defs.h>
+#include "io.h"
 
 // static variables
 namespace {
   //output compare
-  p32_oc& oc1 = *reinterpret_cast<p32_oc*>(_OCMP1_BASE_ADDRESS);
-  p32_oc& oc2 = *reinterpret_cast<p32_oc*>(_OCMP2_BASE_ADDRESS);
-  p32_oc& oc3 = *reinterpret_cast<p32_oc*>(_OCMP3_BASE_ADDRESS);
-  p32_oc& oc4 = *reinterpret_cast<p32_oc*>(_OCMP4_BASE_ADDRESS);
+  p32_oc& tmr_tt_fwd = io::oc1;
+  p32_oc& tmr_tt_rev = io::oc2;
+  p32_oc& tmr_w_fwd = io::oc3;
+  p32_oc& tmr_w_rev = io::oc4;
 
   // timer used for pwm
-  p32_timer& tmr2 = *reinterpret_cast<p32_timer*>(_TMR2_BASE_ADDRESS);
+  p32_timer& tmr2 = io::tmr2;
 
   void __attribute__((interrupt)) handlePWMTimer(void) {
     // The timer 2 is currently not in use (doesn't do anything)
@@ -26,11 +27,11 @@ void setMotorTurntable(float cmd) {
   uint32_t duty = round(tmr2.tmxPr.reg * mag);
 
   if(cmd < 0) {
-    oc1.ocxRs.reg = 0x0000;
-    oc2.ocxRs.reg = duty;
+    tmr_tt_fwd.ocxRs.reg = 0x0000;
+    tmr_tt_rev.ocxRs.reg = duty;
   } else {
-    oc1.ocxRs.reg = duty;
-    oc2.ocxRs.reg = 0x0000;
+    tmr_tt_fwd.ocxRs.reg = duty;
+    tmr_tt_rev.ocxRs.reg = 0x0000;
   }
 }
 
@@ -40,16 +41,16 @@ void setMotorWheel(float cmd) {
   uint32_t duty = round(tmr2.tmxPr.reg * mag);
 
   if(cmd < 0) {
-    oc3.ocxRs.reg = 0x0000;
-    oc4.ocxRs.reg = duty;
+    tmr_w_fwd.ocxRs.reg = 0x0000;
+    tmr_w_rev.ocxRs.reg = duty;
   } else {
-    oc3.ocxRs.reg = duty;
-    oc4.ocxRs.reg = 0x0000;
+    tmr_w_fwd.ocxRs.reg = duty;
+    tmr_w_rev.ocxRs.reg = 0x0000;
   }
 }
 
 void setupMotors() {
-  p32_oc* ocs[] = {&oc1, &oc2, &oc3, &oc4};
+  p32_oc* ocs[] = {&tmr_tt_fwd, &tmr_tt_rev, &tmr_w_fwd, &tmr_w_rev};
 
   for(int i = 0; i < 4; i++) {
     // Turn off the OC when performing the setup
@@ -95,13 +96,13 @@ void beep(float freq, int duration){
 
   // spin the turntable one way or the other, trying to minimize net movement
   if(tot_dur <= 0) {
-    oc1.ocxRs.reg = 0x0000;
-    oc2.ocxRs.reg = 0x1000;
+    tmr_tt_fwd.ocxRs.reg = 0x0000;
+    tmr_tt_rev.ocxRs.reg = 0x1000;
     tot_dur += duration;
   }
   else{
-    oc1.ocxRs.reg = 0x1000;
-    oc2.ocxRs.reg = 0x0000;
+    tmr_tt_fwd.ocxRs.reg = 0x1000;
+    tmr_tt_rev.ocxRs.reg = 0x0000;
     tot_dur -= duration;
   }
 
@@ -109,7 +110,7 @@ void beep(float freq, int duration){
   delay(duration);
 
   // turn everything off, reset the period
-  oc1.ocxRs.reg = 0;
-  oc2.ocxRs.reg = 0;
+  tmr_tt_fwd.ocxRs.reg = 0;
+  tmr_tt_rev.ocxRs.reg = 0;
   tmr2.tmxPr.reg = 0xffff;
 }

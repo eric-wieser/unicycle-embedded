@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include <p32_defs.h>
-#include "chipkit_patch.h"
+#include <io.h>
 #include <messaging.h>
 
 // pin definitions
@@ -10,11 +9,11 @@ const uint8_t W_DIR_PIN = 47;
 // static variables
 namespace {
   // Type B timers
-  p32_timer& tmr3 = *reinterpret_cast<p32_timer*>(_TMR3_BASE_ADDRESS);
-  p32_timer& tmr4 = *reinterpret_cast<p32_timer*>(_TMR4_BASE_ADDRESS);
+  p32_timer& tt_tmr = io::tmr3;
+  p32_timer& w_tmr = io::tmr4;
 
-  //change notifier
-  p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
+  // change notifier
+  p32_cn& cn = io::cn;
 
   volatile int TMR3sign = 1;             // sign of the value in TMR3
   volatile int TMR4sign = 1;             // sign of the value in TMR4
@@ -48,12 +47,12 @@ namespace {
     const int wSign  = wNeg ? -1 : 1;
 
     if (TMR3sign != ttSign) {
-      tmr3.tmxTmr.reg = (short int) -tmr3.tmxTmr.reg;
+      tt_tmr.tmxTmr.reg = (short int) -tt_tmr.tmxTmr.reg;
     }
     TMR3sign = ttSign;
 
     if (TMR4sign != wSign) {
-      tmr4.tmxTmr.reg = (short int) -tmr4.tmxTmr.reg;
+      w_tmr.tmxTmr.reg = (short int) -w_tmr.tmxTmr.reg;
     }
     TMR4sign = wSign;
   }
@@ -73,33 +72,33 @@ void setupEncoders() {
 
   // start the encoder timers
   // T3 external source is the pulse from the turntable
-  tmr3.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
-  tmr3.tmxTmr.reg = 0;
-  tmr3.tmxPr.reg = 0xffff;
-  tmr3.tmxCon.set = TBCON_ON;
+  tt_tmr.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
+  tt_tmr.tmxTmr.reg = 0;
+  tt_tmr.tmxPr.reg = 0xffff;
+  tt_tmr.tmxCon.set = TBCON_ON;
 
   // T4 external source is the pulse from the wheel
-  tmr4.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
-  tmr4.tmxTmr.reg = 0;
-  tmr4.tmxPr.reg = 0xffff;
-  tmr4.tmxCon.set = TBCON_ON;
+  w_tmr.tmxCon.reg = TBCON_SRC_EXT | TBCON_PS_1;
+  w_tmr.tmxTmr.reg = 0;
+  w_tmr.tmxPr.reg = 0xffff;
+  w_tmr.tmxCon.set = TBCON_ON;
 }
 
 void resetEncoders() {
   // clearIntEnable(_CHANGE_NOTICE_IRQ);
   // // TMR3sign = 1;
   // // TMR4sign = 1;
-  // // tmr4.tmxTmr.reg = 0;
-  // // tmr3.tmxTmr.reg = 0;
+  // // w_tmr.tmxTmr.reg = 0;
+  // // tt_tmr.tmxTmr.reg = 0;
   // // setIntEnable(_CHANGE_NOTICE_IRQ);
   // // 
   // setupEncoders();
 }
 
 int16_t getTTangle() {
-  return TMR3sign * static_cast<int16_t>(tmr3.tmxTmr.reg);
+  return TMR3sign * static_cast<int16_t>(tt_tmr.tmxTmr.reg);
 }
 
 int16_t getWangle() {
-  return TMR4sign * static_cast<int16_t>(tmr4.tmxTmr.reg);
+  return TMR4sign * static_cast<int16_t>(w_tmr.tmxTmr.reg);
 }

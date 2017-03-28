@@ -16,6 +16,7 @@
 #include <messaging.h>
 
 // Local includes
+#include "io.h"
 #include "policy.h"
 #include "intAngVel.h"
 #include "gyroAccel.h"
@@ -72,7 +73,7 @@ bool singleLogPending = false;
 LogEntry* currLog = &singleLog;
 
 // Type A timer
-p32_timer& tmr1 = *reinterpret_cast<p32_timer*>(_TMR1_BASE_ADDRESS);
+p32_timer& ctrl_tmr = io::tmr1;
 
 //! handles computing the overall state
 struct StateTracker {
@@ -174,14 +175,14 @@ void __attribute__((interrupt)) mainLoop(void) {
 
   //this 5ms window is used for speed measurement
   if (phase == LoopPhase::PRE) {
-    tmr1.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
+    ctrl_tmr.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
     phase = LoopPhase::MAIN;
 
     state_tracker.pre_update();
   }
   // the remaining window is used for collecting the rest of the data and computing output
   else {
-    tmr1.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
+    ctrl_tmr.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
     phase = LoopPhase::PRE;
 
     // choose where to store data
@@ -325,10 +326,10 @@ void setup() {
   debug("All done");
 
   // start the control loop timer
-  tmr1.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
-  tmr1.tmxTmr.reg = 0;
-  tmr1.tmxPr.reg = 0xffff;
-  tmr1.tmxCon.set = TACON_ON;
+  ctrl_tmr.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
+  ctrl_tmr.tmxTmr.reg = 0;
+  ctrl_tmr.tmxPr.reg = 0xffff;
+  ctrl_tmr.tmxCon.set = TACON_ON;
 
   // set up interrupts on the control loop timer
   clearIntFlag(_TIMER_1_IRQ);
