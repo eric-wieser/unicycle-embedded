@@ -168,7 +168,7 @@ StateTracker state_tracker;
 
 void __attribute__((interrupt)) mainLoop(void) {
   // main timer that keeps track of the 50ms period and perfoms the key functionality
-  clearIntFlag(_TIMER_1_IRQ);
+  clearIntFlag(io::irq_for(ctrl_tmr));
 
   // if we're changing mode, it's not safe to access any other mode variables
   if(mode == Mode::CHANGING) return;
@@ -332,10 +332,10 @@ void setup() {
   ctrl_tmr.tmxCon.set = TACON_ON;
 
   // set up interrupts on the control loop timer
-  clearIntFlag(_TIMER_1_IRQ);
-  setIntVector(_TIMER_1_VECTOR, mainLoop);
-  setIntPriority(_TIMER_1_VECTOR, 2, 0);
-  setIntEnable(_TIMER_1_IRQ);
+  clearIntFlag(io::irq_for(ctrl_tmr));
+  setIntVector(io::vector_for(ctrl_tmr), mainLoop);
+  setIntPriority(io::vector_for(ctrl_tmr), 2, 0);
+  setIntEnable(io::irq_for(ctrl_tmr));
 }
 
 void loop() {

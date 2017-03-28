@@ -27,4 +27,28 @@ namespace io {
 
   //change notifier
   static p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
+
+  // object to interrupt number conversion
+  inline int irq_for(const p32_timer& tmr) {
+    if (&tmr == &tmr1) return _TIMER_1_IRQ;
+    if (&tmr == &tmr2) return _TIMER_2_IRQ;
+    if (&tmr == &tmr3) return _TIMER_3_IRQ;
+    if (&tmr == &tmr4) return _TIMER_4_IRQ;
+    while(1);
+  }
+  inline int irq_for(const p32_cn& cn) {
+    return _CHANGE_NOTICE_IRQ;
+  }
+
+  // object to vector number conversion
+  inline int vector_for(const p32_timer& tmr) {
+    if (&tmr == &tmr1) return _TIMER_1_VECTOR;
+    if (&tmr == &tmr2) return _TIMER_2_VECTOR;
+    if (&tmr == &tmr3) return _TIMER_3_VECTOR;
+    if (&tmr == &tmr4) return _TIMER_4_VECTOR;
+    while(1);
+  }
+  inline int vector_for(const p32_cn& cn) {
+    return _CHANGE_NOTICE_VECTOR;
+  }
 }

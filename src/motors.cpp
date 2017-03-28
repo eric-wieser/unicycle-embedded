@@ -10,12 +10,12 @@ namespace {
   p32_oc& tmr_w_fwd = io::oc3;
   p32_oc& tmr_w_rev = io::oc4;
 
-  // timer used for pwm
-  p32_timer& tmr2 = io::tmr2;
+  // timer used for pwm. Note the code below requires it to be "type B"
+  p32_timer& motor_tmr = io::tmr2;
 
   void __attribute__((interrupt)) handlePWMTimer(void) {
     // The timer 2 is currently not in use (doesn't do anything)
-    clearIntFlag(_TIMER_2_IRQ);
+    clearIntFlag(io::irq_for(motor_tmr));
   }
 }
 
@@ -24,7 +24,7 @@ namespace {
 void setMotorTurntable(float cmd) {
   float mag = abs(cmd);
   if(mag > 1) mag = 1;
-  uint32_t duty = round(tmr2.tmxPr.reg * mag);
+  uint32_t duty = round(motor_tmr.tmxPr.reg * mag);
 
   if(cmd < 0) {
     tmr_tt_fwd.ocxRs.reg = 0x0000;
@@ -38,7 +38,7 @@ void setMotorTurntable(float cmd) {
 void setMotorWheel(float cmd) {
   float mag = abs(cmd);
   if(mag > 1) mag = 1;
-  uint32_t duty = round(tmr2.tmxPr.reg * mag);
+  uint32_t duty = round(motor_tmr.tmxPr.reg * mag);
 
   if(cmd < 0) {
     tmr_w_fwd.ocxRs.reg = 0x0000;
@@ -65,18 +65,18 @@ void setupMotors() {
   }
 
   // Set period of corresponding timer
-  tmr2.tmxPr.reg = 0xFFFF;
+  motor_tmr.tmxPr.reg = 0xFFFF;
 
   // Configure Timer2 interrupt. Note that in PWM mode, the
   // corresponding source timer interrupt flag is asserted.
   // OC interrupt is not generated in PWM mode.
-  clearIntFlag(_TIMER_2_IRQ);
-  setIntVector(_TIMER_2_VECTOR, handlePWMTimer);
-  setIntPriority(_TIMER_2_VECTOR, 7, 0);
-  setIntEnable(_TIMER_2_IRQ);
+  clearIntFlag(io::irq_for(motor_tmr));
+  setIntVector(io::vector_for(motor_tmr), handlePWMTimer);
+  setIntPriority(io::vector_for(motor_tmr), 7, 0);
+  setIntEnable(io::irq_for(motor_tmr));
 
-  // enable TMR2
-  tmr2.tmxCon.set = TBCON_ON;
+  // enable the timer
+  motor_tmr.tmxCon.set = TBCON_ON;
 
   // Enable output compares
   for(int i = 0; i < 4; i++) {
@@ -92,7 +92,7 @@ void beep(float freq, int duration){
   if(per > 0xffff)
     return;
 
-  tmr2.tmxPr.reg = per;
+  motor_tmr.tmxPr.reg = per;
 
   // spin the turntable one way or the other, trying to minimize net movement
   if(tot_dur <= 0) {
@@ -112,5 +112,5 @@ void beep(float freq, int duration){
   // turn everything off, reset the period
   tmr_tt_fwd.ocxRs.reg = 0;
   tmr_tt_rev.ocxRs.reg = 0;
-  tmr2.tmxPr.reg = 0xffff;
+  motor_tmr.tmxPr.reg = 0xffff;
 }

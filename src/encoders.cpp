@@ -41,7 +41,7 @@ namespace {
       ttNeg = portRegisters(tt_mask)->port.reg & tt_mask;
     }
 
-    clearIntFlag(_CHANGE_NOTICE_IRQ);
+    clearIntFlag(io::irq_for(cn));
 
     const int ttSign = ttNeg ? -1 : 1;
     const int wSign  = wNeg ? -1 : 1;
@@ -65,10 +65,10 @@ void setupEncoders() {
   cn.cnEn.reg = digitalPinToCN(TT_DIR_PIN) | digitalPinToCN(W_DIR_PIN);
   cn.cnPue.reg = 0;
 
-  clearIntFlag(_CHANGE_NOTICE_IRQ);
-  setIntVector(_CHANGE_NOTICE_VECTOR, handleEncoderSignChange);
-  setIntPriority(_CHANGE_NOTICE_VECTOR, 2, 0); //should this be priority 2?
-  setIntEnable(_CHANGE_NOTICE_IRQ);
+  clearIntFlag(io::irq_for(cn));
+  setIntVector(io::vector_for(cn), handleEncoderSignChange);
+  setIntPriority(io::vector_for(cn), 2, 0); //should this be priority 2?
+  setIntEnable(io::irq_for(cn));
 
   // start the encoder timers
   // T3 external source is the pulse from the turntable
@@ -85,12 +85,12 @@ void setupEncoders() {
 }
 
 void resetEncoders() {
-  // clearIntEnable(_CHANGE_NOTICE_IRQ);
+  // clearIntEnable(io::irq_for(cn));
   // // TMR3sign = 1;
   // // TMR4sign = 1;
   // // w_tmr.tmxTmr.reg = 0;
   // // tt_tmr.tmxTmr.reg = 0;
-  // // setIntEnable(_CHANGE_NOTICE_IRQ);
+  // // setIntEnable(io::irq_for(cn));
   // // 
   // setupEncoders();
 }
