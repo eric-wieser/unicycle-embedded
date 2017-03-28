@@ -13,7 +13,7 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   % load rollout data from robot
   log_file = uigetfullfile('*.mat', 'Load rollout logs', logs_dir);
   log_msg = load_msg(log_file);
-  [z, u] = get_from_logs(log_msg, plant);
+  [z, u] = get_from_logs(log_msg, ctrl, plant);
 
   % evaluate the loss function, exactly as we would in normal rollout
   D = ctrl.D;
@@ -49,7 +49,7 @@ function save_msg(fname, msg)
   builtin('save', fname, 'msg');
 end
 
-function [z, u] = get_from_logs(msg, plant)
+function [z, u] = get_from_logs(msg, ctrl, plant)
   % mapping between protobuf LogEntry fields and z frame
   z_name_map.droll          = 'droll';
   z_name_map.dyaw           = 'dyaw';
@@ -83,6 +83,11 @@ function [z, u] = get_from_logs(msg, plant)
     u(:,u_index) = [msg.(u_name)];
   end
   u = u(1:end-1,:);  % truncate the last unused action
+  
+  % scale from [-1 1], which we get from the robot, back to torques
+  % This is basically reversing the gsat part of the controller, which we
+  % don't actually im
+  u = u .* ctrl.policy.maxU;
 end
 
 function pol = get_linear_policy(ctrl)
