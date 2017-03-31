@@ -10,6 +10,14 @@
 #include <messaging.h>
 
 
+template <typename T> typename messageHandlers<T>::type messageHandlers<T>::handler;
+
+
+template struct messageHandlers<Go>;
+template struct messageHandlers<Stop>;
+template struct messageHandlers<SetController>;
+template struct messageHandlers<GetLogs>;
+
 namespace {
     //! our cobs packetizer
     packetio::COBSPrint cobs_out(Serial);
@@ -164,9 +172,3 @@ void sendLog(const LogEntry& entry) {
     message.msg.single_log = entry;
     sendMessage(message);
 }
-
-template <typename T> typename messageHandlers<T>::type messageHandlers<T>::handler;
-template messageHandlers<Go>::type messageHandlers<Go>::handler;
-template messageHandlers<Stop>::type messageHandlers<Stop>::handler;
-template messageHandlers<SetController>::type messageHandlers<SetController>::handler;
-template messageHandlers<GetLogs>::type messageHandlers<GetLogs>::handler;

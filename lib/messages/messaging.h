@@ -17,11 +17,6 @@ struct messageHandlers {
     static type handler;
 };
 
-template struct messageHandlers<Go>;
-template struct messageHandlers<Stop>;
-template struct messageHandlers<SetController>;
-template struct messageHandlers<GetLogs>;
-
 //! Attach a listener for a given message type
 template<typename T> void onMessage(typename messageHandlers<T>::type handler) {
     messageHandlers<T>::handler = handler;
