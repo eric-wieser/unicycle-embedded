@@ -10,7 +10,8 @@ Welcome to documentation for the Miniature Unicycle Firmware
    :maxdepth: 2
    :caption: Contents:
 
-
+   hardware
+   sensors
 
 Indices and tables
 ==================
