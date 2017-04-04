@@ -10,8 +10,11 @@ Welcome to documentation for the Miniature Unicycle Firmware
    :maxdepth: 2
    :caption: Contents:
 
+   toolchain
    hardware
-   sensors
+   comms
+   terminal
+   matlab
 
 Indices and tables
 ==================

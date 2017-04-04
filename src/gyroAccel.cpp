@@ -1,8 +1,23 @@
-// Provide interface to gyro and accelerometer via I2C serial
-//
-// Carl Edward Rasmussen, 2011-09-22
-// Aleksi Tukiainen, 2016-05-20
+/*!
+\file gyroAccel.cpp
 
+\rst
+
+  The robot has a combined accelerometer and gyro board that is `sold by
+  Sparkfun`_. The accelerometer is an ADXL345_, and the gyroscope is an
+  `ITG-3200`_.
+
+  Both of these sensors use the I2C protocol - in fact, they share a bus.
+  Unfortunately, the builtin arduino Wire_ interface that implements this
+  protocol does not appear to work on our microcontroller board.
+
+  .. _`sold by Sparkfun`: https://www.sparkfun.com/products/10121
+  .. _ADXL345: https://www.sparkfun.com/datasheets/Sensors/Accelerometer/ADXL345.pdf
+  .. _`ITG-3200`: https://www.sparkfun.com/datasheets/Sensors/Gyro/PS-ITG-3200-00-01.4.pdf
+  .. _Wire: https://www.arduino.cc/en/reference/wire
+
+\endrst
+*/
 #include "gyroAccel.h"
 #include "i2c_funcs.h"
 
@@ -12,12 +27,13 @@ using namespace i2c_funcs;
 
 #include "io.h"
 
+//! Internal helpers
 namespace {
 
   // choose which I2C pins to use
   p32_i2c& i2c = io::i2c1;
 
-  // write one data byte to a specified register at I2C address
+  //! Write one data byte to a specified register at I2C address
   void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)
   {
     StartI2C(i2c); IdleI2C(i2c);             // send start condition
@@ -27,7 +43,7 @@ namespace {
     StopI2C(i2c); IdleI2C(i2c);              // send stop condition
   }
 
-  // read length bytes to data array from I2C addr, starting at specified reg
+  //! Read length bytes to data array from I2C addr, starting at specified reg
   void I2CRead(uint8_t addr, uint8_t reg, uint8_t *data, size_t length)
   {
     StartI2C(i2c); IdleI2C(i2c);                 // send start condition
@@ -62,6 +78,7 @@ namespace {
   }
 }
 
+//! Initialize the connection to the accelerometer and gyro
 void gyroAccelSetup()
 {
   OpenI2C(i2c, I2C_EN, 0x062); // 400 KHz
@@ -77,7 +94,12 @@ void gyroAccelSetup()
   delay(1500);
 }
 
-// read the accelerometer and return accel in m/s^2
+/**
+ * \brief Read the accelerometer
+ *
+ * \param[out]  x,y,z  The acceleration in m s^-2, in the coordinate
+ *                     system printed on the board
+ */
 void accelRead(float &x, float &y, float &z)
 {
   float c = 2048.0 / 9.82;            // conversion factor from 13 bit to m/s^2
@@ -89,8 +111,12 @@ void accelRead(float &x, float &y, float &z)
   z = (short int) -(s[2] + 256*s[3])/c; // return as floats for each direction
 
 }
-
-// read the rate gyros, and return angular speeds in radians per second
+/**
+ * \brief Read the gyroscope
+ *
+ * \param[out]  x,y,z  The angular velocity in rad s^-2, in the
+ *                     coordinate system printed on the board
+ */
 void gyroRead(float &x, float &y, float &z)
 {
   static float x0, y0, z0;                 // offset angular velocities

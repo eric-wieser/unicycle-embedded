@@ -1,12 +1,29 @@
+/*!
+\file encoders.cpp
+
+\rst
+
+The robot has an encoder on each motor. These go via some circuitry on the
+board that convert them into two lines - a tick, and a direction.
+
+We count the ticks using the builtin hardware timers, but in order to deal with
+the direction reversing, we have to monitor the direction pin. We use the
+"change notifier" hardware to fire an interrupt whenever these pins change, and
+correct the sign accordingly.
+
+Each encoder is a `Maxon 201937`_, "Encoder MR, Type M, 512 CPT, 2 Channels,
+with Line Driver".
+
+.. _`Maxon 201937`: http://www.maxonmotor.com/maxon/view/product/201937
+
+\endrst
+*/
+
 #include <Arduino.h>
 #include <io.h>
 #include <pins.h>
 #include <messaging.h>
 #include <gpio.h>
-
-// pin definitions
-const uint8_t TT_DIR_PIN = 39;
-const uint8_t W_DIR_PIN = 47;
 
 // static variables
 namespace {
@@ -63,7 +80,7 @@ namespace {
     gpio::CachedReader reader;
     bool w_neg = reader.read(w_timer.dir_pin);
     bool tt_neg = reader.read(tt_timer.dir_pin);
-  
+
     // only reenable the interrupt after we've read the values
     clearIntFlag(_CHANGE_NOTICE_IRQ);
 
@@ -71,12 +88,13 @@ namespace {
     tt_timer.update(tt_neg);
   }
 }
-
+//! Initialize the hardware required by the encoders
 void setupEncoders() {
   // configure the change notice to watch the encoder pins
   cn.cnCon.clr = 0xFFFF;
   cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
-  cn.cnEn.reg = digitalPinToCN(TT_DIR_PIN) | digitalPinToCN(W_DIR_PIN);
+  cn.cnEn.reg = digitalPinToCN(w_timer.dir_pin)
+              | digitalPinToCN(tt_timer.dir_pin);
   cn.cnPue.reg = 0;
 
   clearIntFlag(io::irq_for(cn));
@@ -89,6 +107,7 @@ void setupEncoders() {
   tt_timer.setup();
 }
 
+//! Reset the counts of the encoders
 void resetEncoders() {
   clearIntEnable(_CHANGE_NOTICE_IRQ);
   w_timer.reset();
@@ -96,10 +115,12 @@ void resetEncoders() {
   setIntEnable(_CHANGE_NOTICE_IRQ);
 }
 
+//! Get the angle of the turntable, in encoder ticks
 int16_t getTTangle() {
   return tt_timer.read();
 }
 
+//! Get the angle of the wheel, in encoder ticks
 int16_t getWangle() {
   return w_timer.read();
 }

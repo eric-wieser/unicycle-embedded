@@ -5,5 +5,5 @@
 
 void gyroAccelSetup();
 
-void accelRead(float &, float &, float &);
-void gyroRead(float &, float &, float &);
+void accelRead(float &x, float &y, float &z);
+void gyroRead(float &x, float &y, float &z);
