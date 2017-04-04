@@ -16,6 +16,10 @@ public:
 
     Pin(uint8_t pin)
         : Pin(pin, digitalPinToPort(pin), digitalPinToBitMask(pin)) { }
+
+    operator uint8_t() {
+        return pin;
+    }
 private:
     Pin(uint8_t pin, uint8_t port, uint8_t mask)
         : pin(pin), port(port), mask(mask), port_mask(1 << port) { }
