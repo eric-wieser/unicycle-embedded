@@ -366,16 +366,17 @@ def enable_win_unicode_console():
     import win_unicode_console
     win_unicode_console.enable()
 
-enable_win_unicode_console()
-colorama.init()
-protobufcolor.init()
+if __name__ == '__main__':
+    enable_win_unicode_console()
+    colorama.init()
+    protobufcolor.init()
 
-# get an event loop
-if os.name == 'nt':
-    loop = asyncio.ProactorEventLoop() # for subprocess' pipes on Windows
-    asyncio.set_event_loop(loop)
-else:
-    loop = asyncio.get_event_loop()
+    # get an event loop
+    if os.name == 'nt':
+        loop = asyncio.ProactorEventLoop() # for subprocess' pipes on Windows
+        asyncio.set_event_loop(loop)
+    else:
+        loop = asyncio.get_event_loop()
 
-loop.run_until_complete(Commands().cmdloop())
-loop.close()
+    loop.run_until_complete(Commands().cmdloop())
+    loop.close()
