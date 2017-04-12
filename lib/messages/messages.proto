@@ -25,7 +25,7 @@ message LinearPolicy {
   float k_pitch    = 11;
 }
 
-message SetController {
+message Controller {
   LinearPolicy wheel = 1;
   LinearPolicy turntable = 2;
 }
@@ -34,7 +34,7 @@ message PCMessage {
   oneof msg {
     Go go = 1;
     Stop stop = 2;
-    SetController controller = 3;
+    Controller controller = 3;
     GetLogs get_logs = 4;
   }
 }
@@ -70,6 +70,7 @@ message LogEntry {
 
 message LogBundle {
   repeated LogEntry entry = 1;
+  // Controller controller = 2;
 }
 
 message DebugMessage {

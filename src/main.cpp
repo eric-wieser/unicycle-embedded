@@ -294,7 +294,7 @@ void setup() {
 
   onMessage<Go>(&on_go);
   onMessage<Stop>(&on_stop);
-  onMessage<SetController>(setPolicy);
+  onMessage<Controller>(setPolicy);
   onMessage<GetLogs>(&on_get_logs);
 
   pinMode(pins::LED, OUTPUT);

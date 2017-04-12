@@ -15,7 +15,7 @@ template <typename T> typename messageHandlers<T>::type messageHandlers<T>::hand
 
 template struct messageHandlers<Go>;
 template struct messageHandlers<Stop>;
-template struct messageHandlers<SetController>;
+template struct messageHandlers<Controller>;
 template struct messageHandlers<GetLogs>;
 
 namespace {
@@ -97,7 +97,7 @@ namespace {
         }
 
         switch(message.which_msg) {
-            case PCMessage_controller_tag: messageHandlers<SetController>::handler.operator ()(message.msg.controller); return;
+            case PCMessage_controller_tag: messageHandlers<Controller>::handler.operator ()(message.msg.controller); return;
             case PCMessage_go_tag:         messageHandlers<Go>::handler.operator ()(message.msg.go); return;
             case PCMessage_stop_tag:       messageHandlers<Stop>::handler.operator ()(message.msg.stop); return;
             case PCMessage_get_logs_tag:   messageHandlers<GetLogs>::handler.operator ()(message.msg.get_logs); return;

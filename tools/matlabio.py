@@ -90,4 +90,4 @@ def _apply_to_msg(msg, np_array):
 
 def load_policy(mat_file_name):
     msg = scipy.io.loadmat(mat_file_name, squeeze_me=True)['msg']
-    return _apply_to_msg(messages_pb2.SetController(), msg)
+    return _apply_to_msg(messages_pb2.Controller(), msg)

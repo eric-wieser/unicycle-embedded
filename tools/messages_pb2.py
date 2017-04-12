@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\xce\x01\n\x0cLinearPolicy\x12\x0e\n\x06k_bias\x18\x01 \x01(\x02\x12\x0f\n\x07k_droll\x18\x02 \x01(\x02\x12\x0e\n\x06k_dyaw\x18\x03 \x01(\x02\x12\x11\n\tk_dAngleW\x18\x04 \x01(\x02\x12\x10\n\x08k_dpitch\x18\x05 \x01(\x02\x12\x12\n\nk_dAngleTT\x18\x06 \x01(\x02\x12\x11\n\tk_xOrigin\x18\x07 \x01(\x02\x12\x11\n\tk_yOrigin\x18\x08 \x01(\x02\x12\x0e\n\x06k_roll\x18\t \x01(\x02\x12\r\n\x05k_yaw\x18\n \x01(\x02\x12\x0f\n\x07k_pitch\x18\x0b \x01(\x02\"O\n\rSetController\x12\x1c\n\x05wheel\x18\x01 \x01(\x0b\x32\r.LinearPolicy\x12 \n\tturntable\x18\x02 \x01(\x0b\x32\r.LinearPolicy\"\x80\x01\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12$\n\ncontroller\x18\x03 \x01(\x0b\x32\x0e.SetControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"\x19\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msgb\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\xce\x01\n\x0cLinearPolicy\x12\x0e\n\x06k_bias\x18\x01 \x01(\x02\x12\x0f\n\x07k_droll\x18\x02 \x01(\x02\x12\x0e\n\x06k_dyaw\x18\x03 \x01(\x02\x12\x11\n\tk_dAngleW\x18\x04 \x01(\x02\x12\x10\n\x08k_dpitch\x18\x05 \x01(\x02\x12\x12\n\nk_dAngleTT\x18\x06 \x01(\x02\x12\x11\n\tk_xOrigin\x18\x07 \x01(\x02\x12\x11\n\tk_yOrigin\x18\x08 \x01(\x02\x12\x0e\n\x06k_roll\x18\t \x01(\x02\x12\r\n\x05k_yaw\x18\n \x01(\x02\x12\x0f\n\x07k_pitch\x18\x0b \x01(\x02\"L\n\nController\x12\x1c\n\x05wheel\x18\x01 \x01(\x0b\x32\r.LinearPolicy\x12 \n\tturntable\x18\x02 \x01(\x0b\x32\r.LinearPolicy\"}\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12!\n\ncontroller\x18\x03 \x01(\x0b\x32\x0b.ControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"\x19\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msgb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -206,22 +206,22 @@ _LINEARPOLICY = _descriptor.Descriptor(
 )
 
 
-_SETCONTROLLER = _descriptor.Descriptor(
-  name='SetController',
-  full_name='SetController',
+_CONTROLLER = _descriptor.Descriptor(
+  name='Controller',
+  full_name='Controller',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='wheel', full_name='SetController.wheel', index=0,
+      name='wheel', full_name='Controller.wheel', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='turntable', full_name='SetController.turntable', index=1,
+      name='turntable', full_name='Controller.turntable', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -240,7 +240,7 @@ _SETCONTROLLER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=267,
-  serialized_end=346,
+  serialized_end=343,
 )
 
 
@@ -294,8 +294,8 @@ _PCMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='PCMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=349,
-  serialized_end=477,
+  serialized_start=345,
+  serialized_end=470,
 )
 
 
@@ -451,8 +451,8 @@ _LOGENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=480,
-  serialized_end=784,
+  serialized_start=473,
+  serialized_end=777,
 )
 
 
@@ -482,8 +482,8 @@ _LOGBUNDLE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=786,
-  serialized_end=823,
+  serialized_start=779,
+  serialized_end=816,
 )
 
 
@@ -513,8 +513,8 @@ _DEBUGMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=825,
-  serialized_end=850,
+  serialized_start=818,
+  serialized_end=843,
 )
 
 
@@ -561,15 +561,15 @@ _ROBOTMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='RobotMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=852,
-  serialized_end=972,
+  serialized_start=845,
+  serialized_end=965,
 )
 
-_SETCONTROLLER.fields_by_name['wheel'].message_type = _LINEARPOLICY
-_SETCONTROLLER.fields_by_name['turntable'].message_type = _LINEARPOLICY
+_CONTROLLER.fields_by_name['wheel'].message_type = _LINEARPOLICY
+_CONTROLLER.fields_by_name['turntable'].message_type = _LINEARPOLICY
 _PCMESSAGE.fields_by_name['go'].message_type = _GO
 _PCMESSAGE.fields_by_name['stop'].message_type = _STOP
-_PCMESSAGE.fields_by_name['controller'].message_type = _SETCONTROLLER
+_PCMESSAGE.fields_by_name['controller'].message_type = _CONTROLLER
 _PCMESSAGE.fields_by_name['get_logs'].message_type = _GETLOGS
 _PCMESSAGE.oneofs_by_name['msg'].fields.append(
   _PCMESSAGE.fields_by_name['go'])
@@ -600,7 +600,7 @@ DESCRIPTOR.message_types_by_name['Go'] = _GO
 DESCRIPTOR.message_types_by_name['Stop'] = _STOP
 DESCRIPTOR.message_types_by_name['GetLogs'] = _GETLOGS
 DESCRIPTOR.message_types_by_name['LinearPolicy'] = _LINEARPOLICY
-DESCRIPTOR.message_types_by_name['SetController'] = _SETCONTROLLER
+DESCRIPTOR.message_types_by_name['Controller'] = _CONTROLLER
 DESCRIPTOR.message_types_by_name['PCMessage'] = _PCMESSAGE
 DESCRIPTOR.message_types_by_name['LogEntry'] = _LOGENTRY
 DESCRIPTOR.message_types_by_name['LogBundle'] = _LOGBUNDLE
@@ -635,12 +635,12 @@ LinearPolicy = _reflection.GeneratedProtocolMessageType('LinearPolicy', (_messag
   ))
 _sym_db.RegisterMessage(LinearPolicy)
 
-SetController = _reflection.GeneratedProtocolMessageType('SetController', (_message.Message,), dict(
-  DESCRIPTOR = _SETCONTROLLER,
+Controller = _reflection.GeneratedProtocolMessageType('Controller', (_message.Message,), dict(
+  DESCRIPTOR = _CONTROLLER,
   __module__ = 'messages_pb2'
-  # @@protoc_insertion_point(class_scope:SetController)
+  # @@protoc_insertion_point(class_scope:Controller)
   ))
-_sym_db.RegisterMessage(SetController)
+_sym_db.RegisterMessage(Controller)
 
 PCMessage = _reflection.GeneratedProtocolMessageType('PCMessage', (_message.Message,), dict(
   DESCRIPTOR = _PCMESSAGE,

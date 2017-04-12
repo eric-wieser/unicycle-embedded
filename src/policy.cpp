@@ -4,7 +4,7 @@
  * The actual parameters used in the policy can be reconfigured with setPolicy
  */
 
-#include <messages.pb.h>   // for LogEntry, LinearPolicy, SetController
+#include <messages.pb.h>   // for LogEntry, LinearPolicy, Controller
 
 // internal functions in an anonymous namespace
 namespace {
@@ -56,7 +56,7 @@ namespace {
 }
 
 //! Set the policy from an incoming message
-void setPolicy(const SetController& new_controller)
+void setPolicy(const Controller& new_controller)
 {
 	policyWheelParams = new_controller.wheel;
 	policyTTParams = new_controller.turntable;

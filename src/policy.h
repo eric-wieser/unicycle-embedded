@@ -1,8 +1,8 @@
 #pragma once
 
 struct _LogEntry; typedef _LogEntry LogEntry;
-struct _SetController; typedef _SetController SetController;
+struct _Controller; typedef _Controller Controller;
 
 float policyTurntable(const LogEntry& state);
 float policyWheel(const LogEntry& state);
-void setPolicy(const SetController& new_controller);
+void setPolicy(const Controller& new_controller);
