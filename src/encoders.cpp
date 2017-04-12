@@ -59,7 +59,7 @@ namespace {
       last_sign = sign;
     }
 
-    inline int16_t read() {
+    inline int16_t read() const {
       return last_sign * static_cast<int16_t>(tmr.tmxTmr.reg);
     }
 

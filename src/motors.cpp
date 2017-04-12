@@ -55,7 +55,7 @@ namespace {
       motor_tmr.tmxCon.set = TBCON_ON;
     }
 
-    Timer2Motor(p32_oc& fwd, p32_oc& rev) : oc_fwd(fwd), oc_rev(rev) { }
+    constexpr Timer2Motor(p32_oc& fwd, p32_oc& rev) : oc_fwd(fwd), oc_rev(rev) { }
 
     void setup() {
       p32_oc* ocs[] = {&oc_fwd, &oc_rev};
