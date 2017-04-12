@@ -19,9 +19,9 @@
 
 #include <Arduino.h>
 #include <p32_defs.h>
-#include "io.h"
 
 #include "io.h"
+#include "pins.h"
 
 namespace {
   // timer used for pwm. Note the code below requires it to be "type B"
@@ -94,8 +94,10 @@ namespace {
     }
   };
 
-  Timer2Motor motor_turntable(io::oc1, io::oc2);
-  Timer2Motor motor_wheel(io::oc3, io::oc4);
+  Timer2Motor motor_turntable(io::oc_for<pins::TT_FWD>(),
+                              io::oc_for<pins::TT_REV>());
+  Timer2Motor motor_wheel(io::oc_for<pins::W_FWD>(),
+                          io::oc_for<pins::W_REV>());
 }
 
 /**

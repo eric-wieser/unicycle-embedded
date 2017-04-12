@@ -10,6 +10,11 @@ looking for specific hardware features such as timers and PWM.
 
 Power comes from a 7.4V Li-ion battery.
 
+.. toctree::
+   :hidden:
+
+   compile-safe-io
+
 .. _flashing:
 
 Flashing a program

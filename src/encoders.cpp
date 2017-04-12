@@ -20,10 +20,11 @@ with Line Driver".
 */
 
 #include <Arduino.h>
-#include <io.h>
-#include <pins.h>
-#include <messaging.h>
-#include <gpio.h>
+
+#include "io.h"
+#include "pins.h"
+#include "messaging.h"
+#include "gpio.h"
 
 // static variables
 namespace {
@@ -69,8 +70,8 @@ namespace {
     }
   };
 
-  RollingTimer tt_timer(io::tmr3, pins::TT_DIR);
-  RollingTimer w_timer(io::tmr4, pins::W_DIR);
+  RollingTimer tt_timer(io::timer_for<pins::TT_CLK>(), pins::TT_DIR);
+  RollingTimer w_timer(io::timer_for<pins::W_CLK>(), pins::W_DIR);
 
   void __attribute__((interrupt)) handleEncoderSignChange(void) {
     // This interrupt handler is for keeping track of the TMR3&4 directions, flagged if direction changes
