@@ -91,11 +91,12 @@ namespace {
 //! Initialize the hardware required by the encoders
 void setupEncoders() {
   // configure the change notice to watch the encoder pins
+  uint32_t cn_mask = digitalPinToCN(w_timer.dir_pin)
+                   | digitalPinToCN(tt_timer.dir_pin);
   cn.cnCon.clr = 0xFFFF;
   cn.cnCon.reg = CNCON_ON | CNCON_IDLE_RUN;
-  cn.cnEn.reg = digitalPinToCN(w_timer.dir_pin)
-              | digitalPinToCN(tt_timer.dir_pin);
-  cn.cnPue.reg = 0;
+  cn.cnEn.set = cn_mask;
+  cn.cnPue.clr = cn_mask;
 
   clearIntFlag(io::irq_for(cn));
   setIntVector(io::vector_for(cn), handleEncoderSignChange);
