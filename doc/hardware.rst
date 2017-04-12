@@ -53,6 +53,10 @@ Motors
 Sensors
 -------
 
+There is a limit switch attached to the top of the robot, for use as basic
+human input. This switch must be connected to a ``CN`` pin, as only those
+pins support pull-up resistors.
+
 
 Inertial
 ~~~~~~~~

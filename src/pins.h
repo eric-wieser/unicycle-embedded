@@ -22,7 +22,7 @@ namespace pins {
 	static const uint8_t OC4_PWM = 9;
 
 	// human interaction
-	static const uint8_t SWITCH = 45;
+	static const uint8_t SWITCH = 43;
 	static const uint8_t LED    = PIN_LED1;
 	static const uint8_t USB_RX = 0;
 	static const uint8_t USB_TX = 1;

@@ -257,6 +257,11 @@ auto on_go = [](const Go& go) {
     debug("Starting bulk mode");
   }
 
+  // Wait for the switch to be pressed then released
+  while (!digitalRead(pins::SWITCH));
+  delay(50);
+  while (digitalRead(pins::SWITCH));
+
   play_starting_noise();
 
   // enter the new mode
