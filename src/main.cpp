@@ -24,6 +24,7 @@
 #include "motors.h"
 #include "encoders.h"
 #include "quat.h"
+#include "button.h"
 #include "timer.h"
 
 // Kinematic properties
@@ -261,13 +262,10 @@ auto on_go = [](const Go& go) {
     debug("Request for bulk mode");
   }
 
-  // Wait for the switch to be pressed then released
   debug("Waiting for button press");
-  while (!digitalRead(pins::SWITCH));
-  delay(50);
-  while (digitalRead(pins::SWITCH));
-  debug("Starting");
+  button::awaitPress();
 
+  debug("Starting");
   play_starting_noise();
 
   // enter the new mode
@@ -307,7 +305,7 @@ void setup() {
   pinMode(pins::LED, OUTPUT);
   digitalWrite(pins::LED, LOW);
 
-  pinMode(pins::SWITCH, INPUT_PULLUP);
+  button::setup();
 
   //srand(54321);
 
