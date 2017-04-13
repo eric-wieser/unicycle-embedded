@@ -9,6 +9,7 @@ Welcome to documentation for the Miniature Unicycle Firmware
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :includehidden:
 
    toolchain
    hardware
