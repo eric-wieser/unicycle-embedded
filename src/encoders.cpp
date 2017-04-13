@@ -117,12 +117,15 @@ void resetEncoders() {
   setIntEnable(_CHANGE_NOTICE_IRQ);
 }
 
-//! Get the angle of the turntable, in encoder ticks
+//! Get the angle of the turntable, in encoder ticks.
+//! Positive is counter-clockwise in the vertical axis
 int16_t getTTangle() {
-  return tt_timer.read();
+  // motor is upside-down, so negate
+  return -tt_timer.read();
 }
 
-//! Get the angle of the wheel, in encoder ticks
+//! Get the angle of the wheel, in encoder ticks.
+//! Positive is forwards
 int16_t getWangle() {
   return w_timer.read();
 }
