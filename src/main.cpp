@@ -26,6 +26,7 @@
 #include "quat.h"
 #include "button.h"
 #include "timer.h"
+#include "irq_guard.h"
 
 // Kinematic properties
 const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
@@ -230,6 +231,20 @@ void play_starting_noise() {
   beep(NOTE_G7, 450);
 }
 
+void request_stop() {
+  {
+    // disable timer irq in here
+    irq_guard g(ctrl_tmr.irq);
+    if (mode == Mode::BULK) {
+      bulk.n = bulk.i;
+    }
+    else {
+      mode = Mode::IDLE;
+    }
+  }
+  digitalWrite(pins::LED, LOW);
+}
+
 // set up the message handlers
 auto on_go = [](const Go& go) {
   // default to the maximum number of steps
@@ -274,12 +289,8 @@ auto on_go = [](const Go& go) {
   digitalWrite(pins::LED, HIGH);
 };
 auto on_stop = [](const Stop& stop) {
-  mode = Mode::IDLE;
-  digitalWrite(pins::LED, LOW);
-
-  bulk.i = 0;
-  bulk.n = 0;
-  debug("Stop!");
+  request_stop();
+  debug("Stopped by remote command!");
 };
 auto on_get_logs = [](const GetLogs& getLogs) {
   if(bulk.run_complete) {
@@ -358,4 +369,11 @@ void loop() {
     debug("Test completed");
   }
   bulk.run_complete_main = bulk.run_complete;
+
+  // allow e-stop
+  if (mode != Mode::IDLE && button::isPressed()) {
+    request_stop();
+    while (button::isPressed());
+    debug("Stopped by on-board button!");
+  }
 }

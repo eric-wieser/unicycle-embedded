@@ -200,11 +200,14 @@ class Commands(CommandsBase):
         self.send(msg)
 
         if forever:
-            fname, steps = await self.handle_go_forever_response()
+            fname, actual_steps = await self.handle_go_forever_response()
         else:
-            fname, steps = await self.handle_go_response()
+            fname, actual_steps = await self.handle_go_response()
 
-        self.info('Saved rollout of {} steps to {}'.format(steps, fname))
+        if not forever and steps > actual_steps:
+            self.warn('Rollout was shorter than expected')
+
+        self.info('Saved rollout of {} steps to {}'.format(actual_steps, fname))
 
 
     async def handle_go_forever_response(self):
