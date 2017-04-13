@@ -78,7 +78,7 @@ namespace io {
   //! Get the timer connected to a given CK (clock) pin
   constexpr p32_timer& timer_for(uint8_t pin) {
     return pin == 4  ? tmr1 :
-           pin == 22 ? tmr2 :
+           pin == 22 ? tmr3 :
            pin == 23 ? tmr4 :
            pin == 11 ? tmr5 :
            failed<p32_timer&>("Timer does not exist");
