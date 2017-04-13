@@ -11,7 +11,7 @@
 # This list is getting shorter
 
 git+https://github.com/eric-wieser/breathe.git
-git+https://github.com/eric-wieser/sphinx.git
+git+https://github.com/eric-wieser/sphinx.git@stable
 
 # patched upstream, but not released on PyPI
 # sphinxcontrib-matlabdomain#egg=sphinxcontrib-matlabdomain&subdirectory=matlabdomain
