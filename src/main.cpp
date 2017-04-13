@@ -227,8 +227,21 @@ void play_starting_noise() {
   beep(NOTE_F7, 200);
   delay(50);
   beep(NOTE_FS7, 200);
-  delay(50);
-  beep(NOTE_G7, 450);
+  for(int i = 0; i < 3; i++) {
+    delay(50);
+    beep(NOTE_G7, 200);
+  }
+  delay(250);
+}
+
+
+void play_ending_noise() {
+  beep(NOTE_G7, 100);
+  delay(25);
+  beep(NOTE_G6, 100);
+  delay(25);
+  beep(NOTE_G7, 225);
+  delay(25);
 }
 
 void request_stop() {
@@ -375,5 +388,6 @@ void loop() {
     request_stop();
     while (button::isPressed());
     debug("Stopped by on-board button!");
+    play_ending_noise();
   }
 }
