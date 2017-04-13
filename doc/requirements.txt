@@ -1,3 +1,17 @@
-# breathe master is currently broken
+# These are the dependencies to build the documentation.
+#
+# None of the tools I want to use quite do the things I need them to.
+#
+# The PRs being waited on are:
+#   https://github.com/sphinx-doc/sphinx/pull/3593
+#   https://github.com/sphinx-doc/sphinx/pull/3622
+#   https://github.com/michaeljones/breathe/pull/300
+#   https://github.com/michaeljones/breathe/pull/295
+#
+# This list is getting shorter
+
 git+https://github.com/eric-wieser/breathe.git
-# -e hg://hg@bitbucket.org/ericwieser/sphinxcontrib-matlabdomain#egg=sphinxcontrib-matlabdomain&subdirectory=matlabdomain
+git+https://github.com/eric-wieser/sphinx.git
+
+# patched upstream, but not released on PyPI
+sphinxcontrib-matlabdomain#egg=sphinxcontrib-matlabdomain&subdirectory=matlabdomain
