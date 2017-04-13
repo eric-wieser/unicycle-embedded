@@ -74,7 +74,7 @@ namespace {
   RollingTimer w_timer(io::timer_for<pins::W_CLK>(), pins::W_DIR);
 
   void __attribute__((interrupt)) handleEncoderSignChange(void) {
-    // This interrupt handler is for keeping track of the TMR3&4 directions, flagged if direction changes
+    // This interrupt handler is for keeping track of the timer directions, flagged if direction changes
     // They are counters to keep track of the two motor angles, so if direction changes,
     // the counters need to count down rather than up
 
