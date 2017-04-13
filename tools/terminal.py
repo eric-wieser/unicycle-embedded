@@ -58,6 +58,8 @@ class CommandsBase(AsyncCmd):
         Log text to the command line. If the prompt is active, delete it, then
         redraw it below the printed line
         """
+
+
         val = colorama.Style.RESET_ALL + style + str(val)
         if self._at_prompt:
             print('\x1b[2K\r',end='')
@@ -114,7 +116,7 @@ class Commands(CommandsBase):
         self.stream.write(msg)
         # self.info("Sent {!r}".format(msg))
 
-    async def recv_single(self, val):
+    async def _recv_single(self, val):
         """ handle a single incoming packet """
         which = val.WhichOneof('msg')
         if which == 'debug':
@@ -144,7 +146,7 @@ class Commands(CommandsBase):
         else:
             self.info(val)
 
-    async def recv_incoming_task(self):
+    async def _recv_incoming_task(self):
         """ A background task to be run that receives incoming packets """
         try:
             while self.stream:
@@ -154,7 +156,7 @@ class Commands(CommandsBase):
                     self.error(e)
                     continue
 
-                await self.recv_single(val)
+                await self._recv_single(val)
 
         except comms.SerialException as e:
             self.error("Connection lost")
@@ -174,7 +176,7 @@ class Commands(CommandsBase):
         print("Connected!")
 
         self.stream = comms.ProtobufStream(comms.COBSStream(ser))
-        self.incoming_task = asyncio.ensure_future(self.recv_incoming_task())
+        self.incoming_task = asyncio.ensure_future(self._recv_incoming_task())
 
     async def run_disconnect(self):
         if not self.stream:
@@ -292,7 +294,11 @@ class Commands(CommandsBase):
     # next come the command parsers
 
     async def do_connect(self, arg):
-        """ Connect to the robot """
+        """
+        Connect to the robot
+        ::
+            connect
+        """
         try:
             return await self.run_connect()
         except comms.NoArduinoFound:
@@ -301,19 +307,24 @@ class Commands(CommandsBase):
             self.error("Connecting to the arduino on {} failed".format(e.port))
 
     def do_disconnect(self, arg):
-        """ Connect to the robot """
+        """
+        Disconnect from the robot
+        ::
+            disconnect
+        """
         return self.run_disconnect()
 
 
     @requires_connection
     async def do_go(self, arg):
         """
-        Start a test run
-        Optionally takes an argument, the number of iterations to run for
+        Start a test run.
 
-        go
-        go <n>
-        go forever
+        Optionally takes an argument, the number of iterations to run for
+        ::
+            go
+            go <n>
+            go forever
         """
         if arg == 'forever':
             await self.run_go(forever=True)
@@ -331,6 +342,8 @@ class Commands(CommandsBase):
     async def do_stop(self, arg):
         """
         Abort any active run. Takes no arguments
+        ::
+            stop
         """
         if arg:
             self.error("stop takes no argument")
@@ -341,6 +354,8 @@ class Commands(CommandsBase):
     async def do_policy(self, arg):
         """
         Set the policy, from a mat file
+        ::
+            policy <file>
         """
         if not arg:
             self.error('No file specified')
