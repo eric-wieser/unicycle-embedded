@@ -31,7 +31,7 @@ namespace io {
 
   // I2C
   static constexpr p32_i2c& i2c1 = *reinterpret_cast<p32_i2c*>(_I2C1_BASE_ADDRESS);
-  static constexpr p32_i2c& i2c2 = *reinterpret_cast<p32_i2c*>(_I2C1_BASE_ADDRESS);
+  static constexpr p32_i2c& i2c2 = *reinterpret_cast<p32_i2c*>(_I2C2_BASE_ADDRESS);
 
   // change notifier
   static constexpr p32_cn& cn = *reinterpret_cast<p32_cn*>(_CN_BASE_ADDRESS);
@@ -91,6 +91,14 @@ namespace io {
            failed<p32_oc&>("Output compare does not exist");
   }
 
+  //! Get the I2C connected to a given pair of pins
+  constexpr p32_i2c& i2c_for(uint8_t scl, uint8_t sda) {
+    return scl == 21 && sda == 20 ? i2c1 :
+           scl == 12 && sda == 13 ? i2c2 :
+           failed<p32_i2c&>("I2C does not exist");
+  }
+
+
   /** @} */
 
   /**
@@ -108,6 +116,11 @@ namespace io {
   template <uint8_t pin>
   p32_oc& oc_for() {
     constexpr auto& res = oc_for(pin);
+    return res;
+  }
+  template <uint8_t scl, uint8_t sda>
+  p32_i2c& i2c_for() {
+    constexpr auto& res = i2c_for(scl, sda);
     return res;
   }
   /** @} */

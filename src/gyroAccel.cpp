@@ -26,12 +26,13 @@
 using namespace i2c_funcs;
 
 #include "io.h"
+#include "pins.h"
 
 //! Internal helpers
 namespace {
 
   // choose which I2C pins to use
-  p32_i2c& i2c = io::i2c1;
+  constexpr p32_i2c& i2c = io::i2c_for(pins::IMU_SCL, pins::IMU_SDA);
 
   //! Write one data byte to a specified register at I2C address
   void I2CWrite(uint8_t addr, uint8_t reg, uint8_t data)

@@ -9,21 +9,21 @@ namespace pins
 {
 	/** @name Encoders */
 	static const uint8_t TT_DIR = 39;
-	static const uint8_t W_DIR = 47;
+	static const uint8_t W_DIR  = 47;
 	static const uint8_t TT_CLK = 22;
-	static const uint8_t W_CLK = 23;
+	static const uint8_t W_CLK  = 23;
 	/** @} */
 
 	/** @name I2C Sensors */
-	static const uint8_t I2C1_SDA = 20;
-	static const uint8_t I2C1_SCL = 21;
+	static const uint8_t IMU_SCL = 21;
+	static const uint8_t IMU_SDA = 20;
 	/** @} */
 
 	/** @name Motors */
 	static const uint8_t TT_FWD = 3;
 	static const uint8_t TT_REV = 5;
-	static const uint8_t W_FWD = 6;
-	static const uint8_t W_REV = 9;
+	static const uint8_t W_FWD  = 6;
+	static const uint8_t W_REV  = 9;
 	/** @} */
 
 	/** @name Human interaction */
