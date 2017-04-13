@@ -6,7 +6,7 @@ To open the terminal to connect to the robot, run::
     cd tools
     python3 terminal.py
 
-You'll be greeted with a ``yauc>`` prompt.
+You'll be greeted with a ``yauc>`` prompt, into which you can type ``help`` for more information.
 
 A typical session looks as follows:
 
@@ -52,7 +52,6 @@ A typical session looks as follows:
 	yauc>
 
 After using the  ``go`` command, the USB cable can be disconnected. The terminal will automatically reconnect to and recieve data from the robot when the USB cable is reattached.
-
 
 .. autoclass:: terminal.Commands
    :members:
