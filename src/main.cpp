@@ -24,6 +24,7 @@
 #include "motors.h"
 #include "encoders.h"
 #include "quat.h"
+#include "timer.h"
 
 // Kinematic properties
 const float WHEEL_CIRC = 0.222;       // circumference of the unicycle wheel (measured)
@@ -74,7 +75,7 @@ bool singleLogPending = false;
 LogEntry* currLog = &singleLog;
 
 // Type A timer
-p32_timer& ctrl_tmr = io::tmr1;
+CallbackTimer ctrl_tmr = io::tmr1;
 
 //! handles computing the overall state
 struct StateTracker {
@@ -169,21 +170,21 @@ StateTracker state_tracker;
 
 void __attribute__((interrupt)) mainLoop(void) {
   // main timer that keeps track of the 50ms period and perfoms the key functionality
-  clearIntFlag(io::irq_for(ctrl_tmr));
+  clearIntFlag(ctrl_tmr.irq);
 
   // if we're changing mode, it's not safe to access any other mode variables
   if(mode == Mode::CHANGING) return;
 
   //this 5ms window is used for speed measurement
   if (phase == LoopPhase::PRE) {
-    ctrl_tmr.tmxPr.reg = static_cast<uint16_t>(SPEED_MEASURE_WINDOW * F_CPU / 256);   // clock divisor is 256
+    ctrl_tmr.setPeriod(SPEED_MEASURE_WINDOW);
     phase = LoopPhase::MAIN;
 
     state_tracker.pre_update();
   }
   // the remaining window is used for collecting the rest of the data and computing output
   else {
-    ctrl_tmr.tmxPr.reg = static_cast<uint16_t>((dt - SPEED_MEASURE_WINDOW) * F_CPU / 256);
+    ctrl_tmr.setPeriod(dt - SPEED_MEASURE_WINDOW);
     phase = LoopPhase::PRE;
 
     // choose where to store data
@@ -236,10 +237,13 @@ auto on_go = [](const Go& go) {
   if(n > H_max) n = H_max;
 
   // lock the background loop so we can change mode
+  ctrl_tmr.stop();
   mode = Mode::CHANGING;
 
   // reset the state
   state_tracker = StateTracker();
+  phase = LoopPhase::PRE;
+
   resetEncoders();
 
   // compute the new mode
@@ -268,6 +272,7 @@ auto on_go = [](const Go& go) {
 
   // enter the new mode
   mode = target;
+  ctrl_tmr.start();
   digitalWrite(pins::LED, HIGH);
 };
 auto on_stop = [](const Stop& stop) {
@@ -336,16 +341,9 @@ void setup() {
   debug("All done");
 
   // start the control loop timer
-  ctrl_tmr.tmxCon.reg = TACON_SRC_INT | TACON_PS_256;
-  ctrl_tmr.tmxTmr.reg = 0;
-  ctrl_tmr.tmxPr.reg = 0xffff;
-  ctrl_tmr.tmxCon.set = TACON_ON;
-
-  // set up interrupts on the control loop timer
-  clearIntFlag(io::irq_for(ctrl_tmr));
-  setIntVector(io::vector_for(ctrl_tmr), mainLoop);
-  setIntPriority(io::vector_for(ctrl_tmr), 2, 0);
-  setIntEnable(io::irq_for(ctrl_tmr));
+  ctrl_tmr.setup();
+  ctrl_tmr.attach(mainLoop);
+  ctrl_tmr.start();
 }
 
 void loop() {

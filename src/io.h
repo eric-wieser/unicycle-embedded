@@ -5,11 +5,9 @@
 
 namespace io {
 
-  namespace {
-    //! Helper function for when an invalid argument is supplied
-    template<typename T>
-    T failed(const char*) { while(1); }
-  }
+  //! Helper function for when an invalid argument is supplied
+  template<typename T>
+  T failed(const char*) { while(1); }
 
   /**
    * @name Devices
