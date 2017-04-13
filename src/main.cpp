@@ -249,18 +249,20 @@ auto on_go = [](const Go& go) {
   if(n < 0) {
     bulk.n = 0;
     target = Mode::CONTINUOUS;
-    debug("Starting continuous mode");
+    debug("Request for continuous mode");
   }
   else {
     bulk.n = n;
     target = Mode::BULK;
-    debug("Starting bulk mode");
+    debug("Request for bulk mode");
   }
 
   // Wait for the switch to be pressed then released
+  debug("Waiting for button press");
   while (!digitalRead(pins::SWITCH));
   delay(50);
   while (digitalRead(pins::SWITCH));
+  debug("Starting");
 
   play_starting_noise();
 
