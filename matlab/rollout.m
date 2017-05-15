@@ -107,7 +107,7 @@ function pol = get_linear_policy(ctrl)
           + zE.dyaw'  .* uE.ct * -1 / deg2rad(90);
   else
     pol = ctrl.policy.p;
-    if ~hasfield(pol, 'b') || ~hasfield(pol, 'w')
+    if ~isfield(pol, 'b') || ~isfield(pol, 'w')
       error('Expected a linear policy type')
     end
   end
