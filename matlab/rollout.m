@@ -17,8 +17,8 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
 
   % evaluate the loss function, exactly as we would in normal rollout
   D = ctrl.D;
-  for i = 1:size(z,1)
-     L(i) = cost.fcn(struct('m',z(1,1:D)')).m;
+  for i = 1:size(z,2)
+     L(i) = cost.fcn(struct('m',z(1:D,i))).m;
   end
 
   % set these in the same order as rollout, for matching display
@@ -69,25 +69,25 @@ function [z, u] = get_from_logs(msg, ctrl, plant)
   u_name_map.TurntableInput = 'ct';
   u_name_map.WheelInput     = 'cw';
 
-  u = zeros(length(msg), plant.in_frame.ndim);
-  z = zeros(length(msg), plant.out_frame.ndim);
+  u = zeros(plant.in_frame.ndim, length(msg));
+  z = zeros(plant.out_frame.ndim, length(msg));
 
   for z_name = fieldnames(z_name_map)', z_name = z_name{1};
     z_frame_name = z_name_map.(z_name);
     z_index = plant.out_frame.i.(z_frame_name);
-    z(:,z_index) = [msg.(z_name)];
+    z(z_index,:) = [msg.(z_name)];
   end
   for u_name = fieldnames(u_name_map)', u_name = u_name{1};
     u_frame_name = u_name_map.(u_name);
     u_index = plant.in_frame.i.(u_frame_name);
-    u(:,u_index) = [msg.(u_name)];
+    u(u_index,:) = [msg.(u_name)];
   end
-  u = u(1:end-1,:);  % truncate the last unused action
-  
+  u = u(:,1:end-1);  % truncate the last unused action
+
   % scale from [-1 1], which we get from the robot, back to torques
   % This is basically reversing the gsat part of the controller, which we
   % don't actually im
-  u = u .* ctrl.policy.maxU;
+  u = u .* ctrl.policy.maxU(:);
 end
 
 function pol = get_linear_policy(ctrl)
