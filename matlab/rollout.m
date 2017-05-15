@@ -103,7 +103,7 @@ function pol = get_linear_policy(ctrl)
     uE = u_frame.units;
 
     pol.b = u_frame.zeros;
-    pol.w = zE.pitch' .* uE.cw *  1 / deg2rad(45) ...
+    pol.w = zE.pitch' .* uE.cw *  1 / deg2rad(15) ...
           + zE.dyaw'  .* uE.ct * -1 / deg2rad(90);
   else
     pol = ctrl.policy.p;
