@@ -54,11 +54,11 @@ class LogSaver:
         self.log_count = 0
 
     def save(self, logs):
-        if self.log_count == 0:
-            self.logs_dir.mkdir()
-
         fpath = (self.logs_dir / '{}.mat'.format(self.log_count))
         log = repeated_submessage_to_np(messages_pb2.LogEntry, logs)
+
+        if self.log_count == 0:
+            self.logs_dir.mkdir()
         with fpath.open('wb') as f:
             scipy.io.savemat(f, dict(msg=log, tstamp=datetime.now().isoformat()))
 
