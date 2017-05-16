@@ -115,8 +115,7 @@ struct StateTracker {
     euler_angle d_orient;
     intAngVel(q, w0, w, orient, d_orient);
 
-    // Turntable angle - Note: May be spinning to the wrong direction (according
-    // to convention), but it doesn't matter for learning
+    // Turntable angle
     int16_t newAngleTT = getTTangle();
     float dAngleTT     = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD);
     float deltaAngleTT = (newAngleTT - oldAngleTT) / TT_CPRAD;
