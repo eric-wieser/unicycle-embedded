@@ -4,19 +4,15 @@ import os
 import sys
 import functools
 import time
-import traceback
-import signal
-import collections
-import textwrap
 
 import messages_pb2
 import comms
 from async_helpers import async_race, intercept_ctrlc
 import matlabio
 
-from prompt_toolkit import AbortAction
-from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.shortcuts import print_tokens, style_from_dict, prompt_async
+from prompt_toolkit.shortcuts import style_from_dict
+from simple_commands import CommandBase
+
 from pygments.token import Token
 from pygments.lexer import RegexLexer, bygroups, include
 
@@ -28,110 +24,26 @@ style = style_from_dict({
     Token.Warning: '#ansibrown',
     Token.Debug:   '#ansidarkgray',
 
-    Token.ProtobufField: '#ansiteal'
+    Token.ProtobufField: '#ansiteal',
+
+    Token.Symbol: '#ansidarkgray'
 })
 
 
-
 class ProtobufLexer(RegexLexer):
-    name = 'Lex protobuf output'
+    name = 'protobuf values'
 
     tokens = {
         'root': [
-            (r'(\w+)(: )(.*)', bygroups(Token.ProtobufField, Token, Token.ProtobufValue)),
-            (r'(\w+)( \{)', bygroups(Token.ProtobufField, Token), 'sub'),
+            (r'(\w+)(: )(.*)', bygroups(Token.ProtobufField, Token.Symbol, Token.ProtobufValue)),
+            (r'(\w+)( \{)', bygroups(Token.ProtobufField, Token.Symbol), 'sub'),
             (r'\s+', Token),
         ],
         'sub': [
             include('root'),
-            (r'}', Token, '#pop')
+            (r'}', Token.Symbol, '#pop')
         ]
     }
-
-class CommandsBase:
-    """
-    A basic command line, that prints errors in color, and handles simple
-    commands
-    """
-
-    def __init__(self):
-        self._commands = {}
-        for d in dir(self.__class__):
-            if d.startswith('do_'):
-                name = d[3:]
-                func = getattr(self, d)
-                doc = textwrap.dedent(func.__doc__ or '')
-                self._commands[name] = (func, doc)
-
-        self._history = InMemoryHistory()
-
-    def print_tokens(self, tokens):
-        print_tokens(tokens + [(Token, '\n')], style=style, true_color=True)
-
-    def print_pb_message(self, msg):
-        tokens = list(ProtobufLexer().get_tokens(str(msg)))
-        self.print_tokens(tokens)
-
-    def debug(self, text):
-        self.print_tokens([(Token.Debug, str(text))])
-
-    def info(self, text):
-        self.print_tokens([(Token.Info, str(text))])
-
-    def warn(self, text):
-        self.print_tokens([(Token.Warning, str(text))])
-
-    def error(self, text):
-        self.print_tokens([(Token.Error, str(text))])
-
-    async def do_help(self, arg):
-        if arg:
-            if arg in self._commands:
-                _, doc = self._commands[arg]
-                print(doc)
-            else:
-                self.error('No command {}'.format(arg))
-        else:
-            print('Valid commands:')
-            for c in self._commands:
-                print('  ' + c)
-
-    async def loop(self, intro=None):
-        while True:
-            prompter = prompt_async(
-                patch_stdout=True,
-                get_prompt_tokens=self.get_prompt_tokens,
-                style=style,
-                true_color=True,
-                on_abort=AbortAction.RETURN_NONE,
-                history=self._history)
-            try:
-                line = await prompter
-            except EOFError:
-                break
-
-            if not line:
-                continue
-
-            # separate command and argument
-            cmd, *args = line.split(' ', 1)
-            if args:
-                arg = args[0]
-            else:
-                arg = None
-
-            # lookup the command
-            try:
-                cmd, _ = self._commands[cmd]
-            except KeyError:
-                self.error('No command {!r}'.format(cmd))
-                continue
-
-            # run the command
-            try:
-                await cmd(arg)
-            except Exception:
-                self.print_tokens([(Token.Error, traceback.format_exc())])
 
 
 def requires_connection(method):
@@ -145,8 +57,21 @@ def requires_connection(method):
     return wrapped
 
 
+class Commands(CommandBase):
 
-class Commands(CommandsBase):
+    def __init__(self):
+        super().__init__(style)
+        self.stream = None
+        self.incoming_task = None
+
+        self.log_last_printed = time.time()
+        self.log_saver = matlabio.LogSaver()
+
+        self.awaited_log_bundle = None
+        self.log_queue = None
+
+    def get_prompt_tokens(self, cli):
+        return [(Token.Prompt, "yauc> ")]
 
     async def loop(self):
         print("Yaw Actuated UniCycle command line interface")
@@ -158,19 +83,9 @@ class Commands(CommandsBase):
             print("Exiting cli and stopping motors")
             await self.run_disconnect()
 
-    def get_prompt_tokens(self, cli):
-        return [(Token.Prompt, "yauc> ")]
-
-    def __init__(self):
-        super().__init__()
-        self.stream = None
-        self.incoming_task = None
-
-        self.log_last_printed = time.time()
-        self.log_saver = matlabio.LogSaver()
-
-        self.awaited_log_bundle = None
-        self.log_queue = None
+    def print_pb_message(self, msg):
+        tokens = list(ProtobufLexer().get_tokens(str(msg)))
+        self.print_tokens(tokens)
 
     def send(self, msg):
         self.stream.write(msg)
@@ -188,7 +103,7 @@ class Commands(CommandsBase):
             if self.awaited_log_bundle:
                 self.awaited_log_bundle.set_result(val)
             else:
-                self.warn("Unexpected logs")
+                self.warn("Unexpected log bundle")
 
         elif which == 'single_log':
             val = val.single_log
@@ -196,11 +111,13 @@ class Commands(CommandsBase):
             if self.log_queue is not None:
                 self.log_queue.append(val)
 
-            this_time = time.time()
-            if this_time - self.log_last_printed < 0.5:
-                return
-            self.log_last_printed = this_time
-            self.print_pb_message(val)
+                this_time = time.time()
+                if this_time - self.log_last_printed < 0.5:
+                    return
+                self.log_last_printed = this_time
+                self.print_pb_message(val)
+            else:
+                self.warn("More log entries arrived after saving the file")
 
         else:
             self.print_pb_message(val)
@@ -278,7 +195,6 @@ class Commands(CommandsBase):
             await intercept_ctrlc()
         except KeyboardInterrupt:
             self.log_queue = None
-            print("Have {} items".format(len(q)))
             await self.run_stop()
 
         target = self.log_saver.save(q)
@@ -349,7 +265,7 @@ class Commands(CommandsBase):
         msg = messages_pb2.PCMessage()
         msg.controller.SetInParent()
         msg.controller.CopyFrom(matlabio.load_policy(matfile))
-        print(msg)
+        self.print_pb_message(msg)
         self.send(msg)
 
     # next come the command parsers
