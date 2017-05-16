@@ -128,7 +128,7 @@ struct StateTracker {
     oldAngleW = newAngleW;
 
     // Try the distance calculations (some drift due to yaw (psi))
-    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + d_orient.psi*dt);
+    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + d_orient.theta*dt);
     x_pos += dist*cos(orient.psi);
     y_pos += dist*sin(orient.psi);
     float xOrigin = cos(orient.psi)*-x_pos + sin(orient.psi)*-y_pos;
