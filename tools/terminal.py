@@ -277,7 +277,8 @@ class Commands(CommandBase):
     async def run_policy(self, matfile):
         msg = messages_pb2.PCMessage()
         msg.controller.SetInParent()
-        msg.controller.CopyFrom(matlabio.load_policy(matfile))
+        if matfile != '!none':
+            msg.controller.CopyFrom(matlabio.load_policy(matfile))
         self.print_pb_message(msg)
         self.send(msg)
 
@@ -346,6 +347,7 @@ class Commands(CommandBase):
         Set the policy, from a mat file
         ::
             policy <file>
+            policy !none
         """
         if not arg:
             self.error('No file specified')
