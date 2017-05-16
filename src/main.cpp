@@ -265,7 +265,15 @@ auto on_go = [](const Go& go) {
   // default to the maximum number of steps
   ssize_t n = go.steps;
   if(n == 0) n = H_max;
-  if(n > H_max) n = H_max;
+  if(n > H_max) {
+    char msg[256];
+    snprintf(msg, sizeof(msg),
+      "Not enough memory allocated for %d steps - using %d instead",
+      n, H_max
+    );
+    logging::warn(msg);
+    n = H_max;
+  }
 
   // lock the background loop so we can change mode
   ctrl_tmr.stop();
