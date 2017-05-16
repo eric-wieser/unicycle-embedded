@@ -205,7 +205,7 @@ class Commands(CommandBase):
         self.log_queue = q = []
 
         try:
-            await intercept_ctrlc()
+            await async_race(self.incoming_task, intercept_ctrlc())
         except KeyboardInterrupt:
             self.log_queue = None
             await self.run_stop()
