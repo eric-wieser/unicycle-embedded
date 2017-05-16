@@ -60,7 +60,7 @@ enum class Mode {
 volatile Mode mode = Mode::IDLE;
 
 // for bulk recording
-const int H_max = 50;      // gives the time horizon or "how many time steps will be measured"
+const int H_max = 500;     // gives the time horizon or "how many time steps will be measured"
 struct {
   LogEntry logs[H_max];    //!< log storage
   size_t n = 0;            //!< total number of steps to run
