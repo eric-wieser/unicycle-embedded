@@ -5,8 +5,7 @@ asyncio package
 import asyncio
 
 from .shared import SharedFuture
-from .cmd import AsyncCmd
-from .signal import intercept_ctrlc
+from .signal import intercept_ctrlc, CapturedKeyboardInterrupt
 
 async def async_race(*futures):
     """ Race a set of futures. Await the one that finishes first, and cancel the rest """

@@ -3,85 +3,135 @@ import asyncio
 import os
 import sys
 import functools
-import readline
 import time
 import traceback
 import signal
 import collections
-
-import colorama
+import textwrap
 
 import messages_pb2
 import comms
-from async_helpers import AsyncCmd, async_race, intercept_ctrlc
-import protobufcolor
+from async_helpers import async_race, intercept_ctrlc
 import matlabio
 
-# start off by patching readline
-if not hasattr(readline, 'redisplay'):
-    if not hasattr(readline, rl):
-        raise NotImplementedError("readline.redisplay is missing and can't be patched")
-    def redisplay(rl):
-        rl._print_prompt()
-        rl._update_line()
+from prompt_toolkit import AbortAction
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.shortcuts import print_tokens, style_from_dict, prompt_async
+from pygments.token import Token
+from pygments.lexer import RegexLexer, bygroups, include
 
-    readline.rl.__class__.redisplay = redisplay
-    readline.redisplay = redisplay
+style = style_from_dict({
+    Token:         '#ansilightgray',
 
-class CommandsBase(AsyncCmd):
+    Token.Prompt:  '#ansiwhite',
+    Token.Error:   '#ansired',
+    Token.Warning: '#ansibrown',
+    Token.Debug:   '#ansidarkgray',
+
+    Token.ProtobufField: '#ansiteal'
+})
+
+
+
+class ProtobufLexer(RegexLexer):
+    name = 'Lex protobuf output'
+
+    tokens = {
+        'root': [
+            (r'(\w+)(: )(.*)', bygroups(Token.ProtobufField, Token, Token.ProtobufValue)),
+            (r'(\w+)( \{)', bygroups(Token.ProtobufField, Token), 'sub'),
+            (r'\s+', Token),
+        ],
+        'sub': [
+            include('root'),
+            (r'}', Token, '#pop')
+        ]
+    }
+
+class CommandsBase:
     """
-    A basic command line, that prints errors in color, and tracks whether to
-    redraw the prompt
+    A basic command line, that prints errors in color, and handles simple
+    commands
     """
-
-    ERROR_COLOR = colorama.Fore.RED
-    WARN_COLOR = colorama.Fore.YELLOW
-    DEBUG_COLOR = colorama.Fore.BLACK + colorama.Style.BRIGHT
-    INFO_COLOR = ''
 
     def __init__(self):
-        super().__init__()
-        self._at_prompt = True
+        self._commands = {}
+        for d in dir(self.__class__):
+            if d.startswith('do_'):
+                name = d[3:]
+                func = getattr(self, d)
+                doc = textwrap.dedent(func.__doc__ or '')
+                self._commands[name] = (func, doc)
 
-    async def onecmd(self, line):
-        self._at_prompt = False
-        try:
-            return await super().onecmd(line)
-        except Exception as e:
-            print(colorama.Style.RESET_ALL + self.ERROR_COLOR, end='')
-            traceback.print_exc()
-        finally:
-            self._at_prompt = True
+        self._history = InMemoryHistory()
 
-    def log(self, val, style=''):
-        """
-        Log text to the command line. If the prompt is active, delete it, then
-        redraw it below the printed line
-        """
+    def print_tokens(self, tokens):
+        print_tokens(tokens + [(Token, '\n')], style=style, true_color=True)
 
-
-        val = colorama.Style.RESET_ALL + style + str(val)
-        if self._at_prompt:
-            print('\x1b[2K\r',end='')
-            print(val)
-            readline.redisplay()
-        else:
-            print(val)
-
-    async def get_input(self):
-        return await async_race(super().get_input(), intercept_ctrlc())
+    def print_pb_message(self, msg):
+        tokens = list(ProtobufLexer().get_tokens(str(msg)))
+        self.print_tokens(tokens)
 
     def debug(self, text):
-        self.log(text, style=self.DEBUG_COLOR)
+        self.print_tokens([(Token.Debug, str(text))])
 
     def info(self, text):
-        self.log(text, style=self.INFO_COLOR)
+        self.print_tokens([(Token.Info, str(text))])
 
     def warn(self, text):
-        self.log(text, style=self.WARN_COLOR)
+        self.print_tokens([(Token.Warning, str(text))])
 
     def error(self, text):
-        self.log(text, style=self.ERROR_COLOR)
+        self.print_tokens([(Token.Error, str(text))])
+
+    async def do_help(self, arg):
+        if arg:
+            if arg in self._commands:
+                _, doc = self._commands[arg]
+                print(doc)
+            else:
+                self.error('No command {}'.format(arg))
+        else:
+            print('Valid commands:')
+            for c in self._commands:
+                print('  ' + c)
+
+    async def loop(self, intro=None):
+        while True:
+            prompter = prompt_async(
+                patch_stdout=True,
+                get_prompt_tokens=self.get_prompt_tokens,
+                style=style,
+                true_color=True,
+                on_abort=AbortAction.RETURN_NONE,
+                history=self._history)
+            try:
+                line = await prompter
+            except EOFError:
+                break
+
+            if not line:
+                continue
+
+            # separate command and argument
+            cmd, *args = line.split(' ', 1)
+            if args:
+                arg = args[0]
+            else:
+                arg = None
+
+            # lookup the command
+            try:
+                cmd, _ = self._commands[cmd]
+            except KeyError:
+                self.error('No command {!r}'.format(cmd))
+                continue
+
+            # run the command
+            try:
+                await cmd(arg)
+            except Exception:
+                self.print_tokens([(Token.Error, traceback.format_exc())])
 
 
 def requires_connection(method):
@@ -97,14 +147,24 @@ def requires_connection(method):
 
 
 class Commands(CommandsBase):
-    prompt = colorama.Style.BRIGHT + "yauc> " + colorama.Style.RESET_ALL
-    intro = "Yaw Actuated UniCycle command line interface"
+
+    async def loop(self):
+        print("Yaw Actuated UniCycle command line interface")
+
+        await self.run_connect()
+        try:
+            return await super().loop()
+        finally:
+            print("Exiting cli and stopping motors")
+            await self.run_disconnect()
+
+    def get_prompt_tokens(self, cli):
+        return [(Token.Prompt, "yauc> ")]
 
     def __init__(self):
         super().__init__()
         self.stream = None
         self.incoming_task = None
-        self.cmdqueue = ['connect']
 
         self.log_last_printed = time.time()
         self.log_saver = matlabio.LogSaver()
@@ -140,11 +200,10 @@ class Commands(CommandsBase):
             if this_time - self.log_last_printed < 0.5:
                 return
             self.log_last_printed = this_time
-            self.info(val)
-
+            self.print_pb_message(val)
 
         else:
-            self.info(val)
+            self.print_pb_message(val)
 
     async def _recv_incoming_task(self):
         """ A background task to be run that receives incoming packets """
@@ -219,6 +278,7 @@ class Commands(CommandsBase):
             await intercept_ctrlc()
         except KeyboardInterrupt:
             self.log_queue = None
+            print("Have {} items".format(len(q)))
             await self.run_stop()
 
         target = self.log_saver.save(q)
@@ -280,6 +340,7 @@ class Commands(CommandsBase):
 
     async def run_stop(self):
         if not self.stream: return
+        self.debug('Requesting stop')
         msg = messages_pb2.PCMessage()
         msg.stop.SetInParent()
         self.send(msg)
@@ -362,18 +423,6 @@ class Commands(CommandsBase):
             return
         await self.run_policy(matfile=arg)
 
-    # finally come the hooks for the parser
-
-    async def default(self, line):
-        if line == 'EOF':
-            return True
-        else:
-            return await super().default(line)
-
-    async def postloop(self):
-        print("Exiting cli and stopping motors")
-        await self.run_disconnect()
-
 
 def enable_win_unicode_console():
     if sys.version_info >= (3, 6):
@@ -386,8 +435,6 @@ def enable_win_unicode_console():
 
 if __name__ == '__main__':
     enable_win_unicode_console()
-    colorama.init()
-    protobufcolor.init()
 
     # get an event loop
     if os.name == 'nt':
@@ -396,5 +443,5 @@ if __name__ == '__main__':
     else:
         loop = asyncio.get_event_loop()
 
-    loop.run_until_complete(Commands().cmdloop())
+    loop.run_until_complete(Commands().loop())
     loop.close()
