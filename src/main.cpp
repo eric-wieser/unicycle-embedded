@@ -115,23 +115,26 @@ struct StateTracker {
     euler_angle d_orient;
     intAngVel(q, w0, w, orient, d_orient);
 
-    // Turntable angle - Note: May be spinning to the wrong direction (according to convetion), but it doesn't matter for learning
+    // Turntable angle - Note: May be spinning to the wrong direction (according
+    // to convention), but it doesn't matter for learning
     int16_t newAngleTT = getTTangle();
-    float dAngleTT = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD);
-    AngleTT += static_cast<int16_t>(newAngleTT - oldAngleTT) / TT_CPRAD;
+    float dAngleTT     = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD);
+    float deltaAngleTT = (newAngleTT - oldAngleTT) / TT_CPRAD;
     oldAngleTT = newAngleTT;
+    AngleTT += deltaAngleTT;
 
     // Motorwheel angle
     int16_t newAngleW = getWangle();
-    float dAngleW = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
-    AngleW += static_cast<int16_t>(newAngleW - oldAngleW) / W_CPRAD;
+    float dAngleW     = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
+    float deltaAngleW = (newAngleW - oldAngleW) / W_CPRAD;
     oldAngleW = newAngleW;
+    AngleW += deltaAngleW;
 
     // Try the distance calculations (some drift due to yaw (psi))
-    float dist = W_RADIUS * ((newAngleW - oldAngleW) / W_CPRAD + d_orient.theta*dt);
+    float dist = W_RADIUS * (deltaAngleW + d_orient.theta*dt);
     x_pos += dist*cos(orient.psi);
     y_pos += dist*sin(orient.psi);
-    float xOrigin = cos(orient.psi)*-x_pos + sin(orient.psi)*-y_pos;
+    float xOrigin =  cos(orient.psi)*-x_pos + sin(orient.psi)*-y_pos;
     float yOrigin = -sin(orient.psi)*-x_pos + cos(orient.psi)*-y_pos;
 
     // Data recording starts here!
