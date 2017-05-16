@@ -91,8 +91,8 @@ namespace {
         bool status = pb_decode(&pb_stream, PCMessage_fields, &message);
 
         if(!status) {
-            debug("Message was corrupt");
-            debug(reinterpret_cast<char*>(data), n);
+            logging::error("Message was corrupt");
+            logging::error(reinterpret_cast<char*>(data), n);
             return;
         }
 
@@ -102,8 +102,8 @@ namespace {
             case PCMessage_stop_tag:       messageHandlers<Stop>::handler.operator ()(message.msg.stop); return;
             case PCMessage_get_logs_tag:   messageHandlers<GetLogs>::handler.operator ()(message.msg.get_logs); return;
             default:
-                debug("Message type unknown");
-                debug(reinterpret_cast<char*>(data), n);
+                logging::error("Message type unknown");
+                logging::error(reinterpret_cast<char*>(data), n);
                 return;
         }
     }
@@ -112,13 +112,13 @@ namespace {
 
     void handleError(uint8_t* data, size_t n, PacketError e) {
         if(e == PacketError::Overflow)
-            debug("Overflow error");
+            logging::error("Overflow error");
         else if(e == PacketError::Framing)
-            debug("Framing error");
+            logging::error("Framing error");
         else
-            debug("Unknown error");
+            logging::error("Unknown error");
 
-        debug(reinterpret_cast<char*>(data), n);
+        logging::error(reinterpret_cast<char*>(data), n);
     }
 
 }
@@ -134,20 +134,23 @@ void updateMessaging() {
     listener.update();
 }
 
-//! send a debug string
-void debug(const char* text) {
-    debug(text, strlen(text));
-}
-void debug(const char* text, size_t n) {
-    array_handle<const char> arr = {text, n};
+namespace logging {
+    //! send a debug string
+    void log(DebugLevel level, const char* text, size_t n) {
+        array_handle<const char> arr = {text, n};
 
-    // fill out the message
-    RobotMessage message = RobotMessage_init_zero;
-    message.which_msg = RobotMessage_debug_tag;
-    message.msg.debug.s.funcs.encode = write_string;
-    message.msg.debug.s.arg = &arr;
+        // fill out the message
+        RobotMessage message = RobotMessage_init_zero;
+        message.which_msg = RobotMessage_debug_tag;
+        message.msg.debug.s.funcs.encode = write_string;
+        message.msg.debug.s.arg = &arr;
+        message.msg.debug.level = level;
 
-    sendMessage(message);
+        sendMessage(message);
+    }
+    void log(DebugLevel level, const char* text) {
+        log(level, text, strlen(text));
+    }
 }
 
 //! send log messages

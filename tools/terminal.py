@@ -24,6 +24,8 @@ style = style_from_dict({
     Token.Warning: '#ansibrown',
     Token.Debug:   '#ansidarkgray',
 
+    Token.Robot:   '#ansiyellow',
+
     Token.ProtobufField: '#ansiteal',
 
     Token.Symbol: '#ansidarkgray'
@@ -70,6 +72,12 @@ class Commands(CommandBase):
         self.awaited_log_bundle = None
         self.log_queue = None
 
+    def _log(self, level, text, robot=False):
+        tokens = [(level, str(text))]
+        if robot:
+            tokens = [(Token.Robot, 'remote: ')] + tokens
+        self.print_tokens(tokens)
+
     def get_prompt_tokens(self, cli):
         return [(Token.Prompt, "yauc> ")]
 
@@ -95,8 +103,13 @@ class Commands(CommandBase):
         """ handle a single incoming packet """
         which = val.WhichOneof('msg')
         if which == 'debug':
-            self.debug(val.debug.s)
-            return
+            log_func = {
+                messages_pb2.DEBUG: self.debug,
+                messages_pb2.INFO: self.info,
+                messages_pb2.WARN: self.warn,
+                messages_pb2.ERROR: self.error
+            }.get(val.debug.level, self.debug)
+            log_func(val.debug.s, robot=True)
 
         elif which == 'log_bundle':
             val = val.log_bundle

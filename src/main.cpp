@@ -282,18 +282,18 @@ auto on_go = [](const Go& go) {
   if(n < 0) {
     bulk.n = 0;
     target = Mode::CONTINUOUS;
-    debug("Request for continuous mode");
+    logging::info("Request for continuous mode");
   }
   else {
     bulk.n = n;
     target = Mode::BULK;
-    debug("Request for bulk mode");
+    logging::info("Request for bulk mode");
   }
 
-  debug("Waiting for button press");
+  logging::info("Waiting for button press");
   button::awaitPress();
 
-  debug("Starting");
+  logging::info("Starting");
   play_starting_noise();
 
   // enter the new mode
@@ -303,15 +303,15 @@ auto on_go = [](const Go& go) {
 };
 auto on_stop = [](const Stop& stop) {
   request_stop();
-  debug("Stopped by remote command!");
+  logging::info("Stopped by remote command!");
 };
 auto on_get_logs = [](const GetLogs& getLogs) {
   if(bulk.run_complete) {
-    debug("Sending test data");
+    logging::info("Sending test data");
     sendLogBundle(bulk.logs, bulk.n);
   }
   else {
-    debug("No data yet");
+    logging::info("No data yet");
     sendLogBundle(bulk.logs, 0);
   }
 };
@@ -319,7 +319,7 @@ auto on_get_logs = [](const GetLogs& getLogs) {
 // main function to setup the test
 void setup() {
   setupMessaging();
-  debug("Yaw Actuated UniCycle startup");
+  logging::info("Yaw Actuated UniCycle startup");
 
   onMessage<Go>(&on_go);
   onMessage<Stop>(&on_stop);
@@ -333,15 +333,15 @@ void setup() {
 
   //srand(54321);
 
-  debug("Starting PWM setup");
+  logging::info("Starting PWM setup");
   setupMotors();
   setMotorTurntable(0);
   setMotorWheel(0);
 
-  debug("Starting I2C setup");
+  logging::info("Starting I2C setup");
   gyroAccelSetup();
 
-  debug("Starting encoder setup");
+  logging::info("Starting encoder setup");
   setupEncoders();
 
   // twitch both the turntable and wheel, so that we know things are working
@@ -360,7 +360,7 @@ void setup() {
   float dx, dy, dz;
   gyroRead(dx, dy, dz);
 
-  debug("All done");
+  logging::info("All done");
 
   // start the control loop timer
   ctrl_tmr.setup();
@@ -379,7 +379,7 @@ void loop() {
 
   // log that the test was complete
   if(bulk.run_complete && !bulk.run_complete_main) {
-    debug("Test completed");
+    logging::info("Test completed");
   }
   bulk.run_complete_main = bulk.run_complete;
 
@@ -387,7 +387,7 @@ void loop() {
   if (mode != Mode::IDLE && button::isPressed()) {
     request_stop();
     while (button::isPressed());
-    debug("Stopped by on-board button!");
+    logging::warn("Stopped by on-board button!");
     play_ending_noise();
   }
 }
