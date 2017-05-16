@@ -31,11 +31,17 @@ end
 
 function f = uigetfullfile(varargin)
   [f, path] = uigetfile(varargin{:});
+  if f == 0
+    error('embedded:rollout:nofile', 'No file specified');
+  end
   f = fullfile(path, f);
 end
 
 function f = uiputfullfile(varargin)
   [f, path] = uiputfile(varargin{:});
+  if f == 0
+    error('embedded:rollout:nofile', 'No file specified');
+  end
   f = fullfile(path, f);
 end
 
