@@ -112,40 +112,84 @@ void accelRead(float &x, float &y, float &z)
   z = (short int) -(s[2] + 256*s[3])/c; // return as floats for each direction
 
 }
+
+/**
+ * \brief Read the raw values of the gyroscope, without subtracting initial
+ *        values
+ *
+ * \param[out]  x,y,z  The angular velocity in internal units, in the
+ *                     coordinate system printed on the board
+ */
+void gyroReadRawUncalibrated(int16_t &xi, int16_t &yi, int16_t &zi)
+{
+    uint8_t s[6];
+    gyroRead(0x1D, s, 6);  // GYRO_XOUT_H - GYRO_ZOUT_L
+
+    // big-endian
+    xi = (s[0] << 8) | s[1];
+    yi = (s[2] << 8) | s[3];
+    zi = (s[4] << 8) | s[5];
+}
+
+/**
+ * \brief Read the raw values of the gyroscope, with drift lessened
+ *
+ * \param[out]  x,y,z  The angular velocity in internal units, in the
+ *                     coordinate system printed on the board
+ */
+void gyroReadRaw(int16_t &xi, int16_t &yi, int16_t &zi)
+{
+  // offset angular velocities (internal frame)
+  static int16_t xi0, yi0, zi0;
+  static bool first = true;
+
+  // calibrate on first run
+  if (first) {
+    first = false;
+    int32_t xi_total = 0, yi_total = 0, zi_total = 0;
+    const int N = 20;
+    for (int i = 0; i < N; i++) {
+      int16_t xi, yi, zi;
+      gyroReadRawUncalibrated(xi, yi, zi);
+      xi_total += xi;
+      yi_total += yi;
+      zi_total += zi;
+      delay(5);
+    }
+    xi0 = xi_total / N;
+    yi0 = yi_total / N;
+    zi0 = zi_total / N;
+  }
+
+  // Read, subtracting offsets
+  gyroReadRawUncalibrated(xi, yi, zi);
+  xi -= xi0;
+  yi -= yi0;
+  zi -= zi0;
+}
+
+
 /**
  * \brief Read the gyroscope
  *
- * \param[out]  x,y,z  The angular velocity in rad s^-2, in the
- *                     coordinate system printed on the board
+ * \param[out]  x,y,z
+ *     The angular velocity in rad s^-2, in the coordinate
+ *     system with:
+ *         x pointing forwards
+ *         z pointing left
+ *         y pointing up
  */
 void gyroRead(float &x, float &y, float &z)
 {
-  static float x0, y0, z0;                 // offset angular velocities
-  static bool first = true;
-  float c = 1.0/14.375/57.2958;            // sensor resolution, radians per second
-  uint8_t s[6];                      // need 6 bytes
+  // Read, subtracting offsets
+  int16_t xi, yi, zi;
+  gyroReadRawUncalibrated(xi, yi, zi);
 
-  if (first) {
-    first = false;
-    for (int i = 0; i < 20; i++) {
-      gyroRead(0x1d, s, 6);            // I2C addr 0xd0 and regs begin at 0x1d
+  const float LSB_PER_DEG = 14.375;  // from datasheet
+  const float RAD_PER_LSB = (M_PI / 180) / LSB_PER_DEG;
 
-      x0 += (short int) -(256*s[4] + s[5])*c; // assemble short int (16 bit), rescale (0 is MSB, 1 is LSB)
-      y0 += (short int) (256*s[0] + s[1])*c;  // to radians per second and return as
-      z0 += (short int) -(256*s[2] + s[3])*c; // floats for each direction
-
-
-      /*x0 += (short int)(256*s[0] + s[1])*c; // assemble short int (16 bit), rescale (0 is MSB, 1 is LSB)
-      y0 += (short int)(256*s[2] + s[3])*c; // to radians per second and return as
-      z0 += (short int)(256*s[4] + s[5])*c; // floats for each direction*/
-      delay(5);
-    }
-    x0 /= 20;
-    y0 /= 20;
-    z0 /= 20;
-  }
-  I2CRead(0xd0, 0x1d, s, 6);               // I2C addr 0xd0 and regs begin at 0x1d
-  x = (short int) -(256*s[4] + s[5])*c - x0; // assemble short int (16 bit), rescale
-  y = (short int) (256*s[0] + s[1])*c - y0;  // to radians per second and return as
-  z = (short int) -(256*s[2] + s[3])*c - z0; // floats for each direction
+  // convert to world coordinates, swapping and negating axes
+  x = -zi * RAD_PER_LSB;
+  y =  xi * RAD_PER_LSB;
+  z = -yi * RAD_PER_LSB;
 }
