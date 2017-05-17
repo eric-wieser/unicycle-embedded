@@ -1,6 +1,5 @@
 #pragma once
 
-#include "euler.h"
 #include "vector3.h"
 
 namespace geometry {
@@ -22,7 +21,6 @@ public:
   quat& operator/= (float f);
   quat& operator+= (quat q);
   quat& operator-= (quat q);
-  euler_angle euler() const;
   float norm() const;
 
   Vector3<float> v() const;

@@ -110,9 +110,8 @@ struct StateTracker {
     geometry::Vector3<float> acc = accelRead();
 
     // compute euler angles and their derivatives
-    // Here roll pitch and yaw now match x,y,z orientationally (TODO: what?)
-    geometry::euler_angle orient;
-    geometry::euler_angle d_orient;
+    joint_angles orient;
+    joint_angles d_orient;
     intAngVel(q, w0, w, orient, d_orient);
 
     // Turntable angle
@@ -130,22 +129,22 @@ struct StateTracker {
     AngleW += deltaAngleW;
 
     // Try the distance calculations (some drift due to yaw (psi))
-    float dist = W_RADIUS * (deltaAngleW + d_orient.theta*dt);
+    float dist = W_RADIUS * (deltaAngleW + d_orient.phi*dt);
     x_pos += dist*cos(orient.psi);
     y_pos += dist*sin(orient.psi);
     float xOrigin =  cos(orient.psi)*-x_pos + sin(orient.psi)*-y_pos;
     float yOrigin = -sin(orient.psi)*-x_pos + cos(orient.psi)*-y_pos;
 
     // Data recording starts here!
-    l.droll  = d_orient.phi;   // roll angular velocity
+    l.droll  = d_orient.theta; // roll angular velocity
     l.dyaw   = d_orient.psi;   // yaw angular velocity
-    l.dpitch = d_orient.theta; // pitch angular velocity
+    l.dpitch = d_orient.phi;   // pitch angular velocity
 
-    l.roll  = orient.phi;      // roll angle
+    l.roll  = orient.theta;    // roll angle
     l.yaw   = orient.psi;      // yaw angle
-    l.pitch = orient.theta;    // pitch angle
+    l.pitch = orient.phi;      // pitch angle
 
-    l.dAngleW = dAngleW + d_orient.theta; // Wheel angular velocity
+    l.dAngleW = dAngleW + d_orient.phi; // Wheel angular velocity
     l.dAngleTT = dAngleTT;     // turn table angular velocity
     l.xOrigin = xOrigin;       // x position of origin in self centered coord
     l.yOrigin = yOrigin;       // y position of origin in self centered coord
@@ -155,7 +154,7 @@ struct StateTracker {
     //l.dyOrigin;              // y velocity of origin in self centered coord
     l.x = x_pos;               // x position
     l.y = y_pos;               // y position
-    l.AngleW  = AngleW + orient.theta; // wheel angle
+    l.AngleW  = AngleW + orient.phi; // wheel angle
     l.AngleTT = AngleTT;       // turn table angle
     l.TurntableInput = policyTurntable(l); // control torque for turntable
     l.WheelInput = policyWheel(l); // control torque for wheel

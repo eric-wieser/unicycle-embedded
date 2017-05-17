@@ -110,16 +110,6 @@ quat quat::operator* (const quat &q) const
 //
 //}
 
-//From p.12
-
-euler_angle quat::euler() const
-{
-  euler_angle e;
-  e.phi   = atan2(2*z*w+2*x*y, w*w-z*z-y*y+x*x);
-  e.theta = -asin(2*y*w-2*x*z);
-  e.psi   = atan2(2*y*z+2*x*w, y*y+x*x-w*w-z*z);
-  return e;
-}
 
 //void quat::euler(float &phi, float &theta, float &psi)
 //{

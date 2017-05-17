@@ -29,14 +29,14 @@ quat integrate_quat_aleksi(const quat &q0, const Vector3<float> &w, float dt) {
 void intAngVel(quat& q,
                Vector3<float> &w0,
                const Vector3<float> &w,
-               euler_angle &orient,
-               euler_angle &dorient)
+               joint_angles &orient,
+               joint_angles &dorient)
 {
 
   // extract Euler angles after integrating with mean angular velocity
   q = integrate_quat_aleksi(q, (w + w0) / 2.0, dt);
   q.normalize();
-  orient = q.euler();
+  orient = q;
 
   // extract Euler angles after small timestep
   float dt_small = dt/10;
@@ -44,7 +44,7 @@ void intAngVel(quat& q,
   q1.normalize();
 
   // approximate instantaneous Euler velocities
-  euler_angle e1 = q1.euler();
+  joint_angles e1 = q1;
   dorient.phi   = (e1.phi   - orient.phi)/dt_small;
   dorient.theta = (e1.theta - orient.theta)/dt_small;
   dorient.psi   = (e1.psi   - orient.psi)/dt_small;

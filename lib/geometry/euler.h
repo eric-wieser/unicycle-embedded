@@ -1,11 +1,25 @@
 #pragma once
 
+
 namespace geometry {
 
-struct euler_angle {
-	float phi;   // roll
-	float theta; // pitch
-	float psi;   // yaw
+class quat;
+
+template<int order>
+struct euler_angles {
+  // the meaning of these varies depending on the order
+  float phi;
+  float theta;
+  float psi;
+  euler_angles() {}
+  euler_angles(const quat &q);
 };
+
+
+template<>
+euler_angles<123>::euler_angles(const quat &q);
+
+template<>
+euler_angles<213>::euler_angles(const quat &q);
 
 }
