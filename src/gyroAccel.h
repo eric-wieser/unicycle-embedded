@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <vector3.h>
+
 void gyroAccelSetup();
 
-void accelRead(float &x, float &y, float &z);
-void gyroRead(float &x, float &y, float &z);
+geometry::Vector3<float> accelRead();
+geometry::Vector3<float> gyroRead();

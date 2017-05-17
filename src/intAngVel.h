@@ -1,17 +1,13 @@
 #pragma once
 
-#include "quat.h"
+#include <quat.h>
+#include <euler.h>
+#include <vector3.h>
 
-struct euler_angle {
-	float phi;   // roll - supposedly, based on older code
-	float theta; // pitch
-	float psi;   // yaw
-};
-
-void intAngVel(quat& q,
-               float *w0,
-               const float *w,
-               euler_angle &orient,
-               euler_angle &dorient);
+void intAngVel(geometry::quat& q,
+               geometry::Vector3<float> &w0,
+               const geometry::Vector3<float> &w,
+               geometry::euler_angle &orient,
+               geometry::euler_angle &dorient);
 
 extern const float dt;                 // time step in seconds

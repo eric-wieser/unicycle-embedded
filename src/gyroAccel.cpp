@@ -28,6 +28,8 @@ using namespace i2c_funcs;
 #include "io.h"
 #include "pins.h"
 
+using namespace geometry;
+
 //! Internal helpers
 namespace {
 
@@ -67,7 +69,6 @@ namespace {
     I2CRead(0xa6, reg, data, length);
   }
 
-
   // write one data byte to specified gyro register
   void gyroWrite(uint8_t reg, uint8_t data)
   {
@@ -95,101 +96,94 @@ void gyroAccelSetup()
   delay(1500);
 }
 
+
 /**
- * \brief Read the accelerometer
+ * \brief Convert from the chip coordinate frame to the robot frame
  *
- * \param[out]  x,y,z  The acceleration in m s^-2, in the coordinate
- *                     system printed on the board
+ * The robot frame has 
+ *    x pointing forwards (the side with the microcontroller)
+ *    z pointing left
+ *    y pointing up
  */
-void accelRead(float &x, float &y, float &z)
-{
-  float c = 2048.0 / 9.82;            // conversion factor from 13 bit to m/s^2
-  uint8_t s[6];                 // need 6 bytes
-  accelRead(0x32, s, 6);          // I2C addr 0xa6 and regs begin at 0x32
+template<typename T>
+Vector3<T> chipToRobotFrame(Vector3<T> v_chip) {
+  Vector3<float> v_frame;
 
-  x = (short int) -(s[4] + 256*s[5])/c; // assemble short int (16 bit), rescale (0 is LSB, 1 is MSB)
-  y = (short int) (s[0] + 256*s[1])/c;  // to meters per second squared and
-  z = (short int) -(s[2] + 256*s[3])/c; // return as floats for each direction
+  v_frame.x = -v_chip.z;
+  v_frame.y =  v_chip.x;
+  v_frame.z = -v_chip.y;
 
+  return v_frame;
 }
 
-/**
- * \brief Read the raw values of the gyroscope, without subtracting initial
- *        values
- *
- * \param[out]  x,y,z  The angular velocity in internal units, in the
- *                     coordinate system printed on the board
- */
-void gyroReadRawUncalibrated(int16_t &xi, int16_t &yi, int16_t &zi)
+//! Read the raw values of the accelerometer, in internal frame and units
+Vector3<int16_t> accelReadRaw()
+{
+  uint8_t s[6];
+  accelRead(0x32, s, 6);
+
+  // little-endian
+  Vector3<int16_t> acc_i;
+  acc_i.x = s[0] | (s[1] << 8);
+  acc_i.y = s[2] | (s[3] << 8);
+  acc_i.z = s[4] | (s[5] << 8);
+  return acc_i;
+}
+
+//! Get the acceleration in m s^-2, in the robot frame
+Vector3<float> accelRead()
+{
+  const float SI_PER_LSB = 9.82 / 2048.0;  // conversion factor from 13 bit to m/s^2
+
+  return chipToRobotFrame(accelReadRaw() * SI_PER_LSB);
+}
+
+//! Read the raw values of the gyroscope, without subtracting initial values
+Vector3<int16_t> gyroReadRawUncalibrated()
 {
     uint8_t s[6];
     gyroRead(0x1D, s, 6);  // GYRO_XOUT_H - GYRO_ZOUT_L
 
     // big-endian
-    xi = (s[0] << 8) | s[1];
-    yi = (s[2] << 8) | s[3];
-    zi = (s[4] << 8) | s[5];
+    Vector3<int16_t> omega_i;
+    omega_i.x = (s[0] << 8) | s[1];
+    omega_i.y = (s[2] << 8) | s[3];
+    omega_i.z = (s[4] << 8) | s[5];
+    return omega_i;
 }
 
-/**
- * \brief Read the raw values of the gyroscope, with drift lessened
- *
- * \param[out]  x,y,z  The angular velocity in internal units, in the
- *                     coordinate system printed on the board
- */
-void gyroReadRaw(int16_t &xi, int16_t &yi, int16_t &zi)
+//! Read the raw values of the gyroscope, with drift lessened
+Vector3<int16_t> gyroReadRaw()
 {
   // offset angular velocities (internal frame)
-  static int16_t xi0, yi0, zi0;
+  static Vector3<int16_t> omega_i0;
   static bool first = true;
 
   // calibrate on first run
   if (first) {
     first = false;
-    int32_t xi_total = 0, yi_total = 0, zi_total = 0;
+    Vector3<int32_t> omega_i_total = Vector3<int32_t>::Zero();
     const int N = 20;
     for (int i = 0; i < N; i++) {
-      int16_t xi, yi, zi;
-      gyroReadRawUncalibrated(xi, yi, zi);
-      xi_total += xi;
-      yi_total += yi;
-      zi_total += zi;
+      omega_i_total += gyroReadRawUncalibrated();
       delay(5);
     }
-    xi0 = xi_total / N;
-    yi0 = yi_total / N;
-    zi0 = zi_total / N;
+    omega_i0 = omega_i_total / N;
   }
 
   // Read, subtracting offsets
-  gyroReadRawUncalibrated(xi, yi, zi);
-  xi -= xi0;
-  yi -= yi0;
-  zi -= zi0;
+  return gyroReadRawUncalibrated() - omega_i0;
 }
 
 
-/**
- * \brief Read the gyroscope
- *
- * \param[out]  x,y,z
- *     The angular velocity in rad s^-2, in the coordinate
- *     system with:
- *         x pointing forwards
- *         z pointing left
- *         y pointing up
- */
-void gyroRead(float &x, float &y, float &z)
+//! Get the angular velocity in the robot frame
+Vector3<float> gyroRead()
 {
-  // Read, subtracting offsets
-  int16_t xi, yi, zi;
-  gyroReadRawUncalibrated(xi, yi, zi);
+  Vector3<float> omega_frame;
 
   const float LSB_PER_DEG = 14.375;  // from datasheet
   const float RAD_PER_LSB = (M_PI / 180) / LSB_PER_DEG;
 
-  // convert to world coordinates, swapping and negating axes
-  x = -zi * RAD_PER_LSB;
-  y =  xi * RAD_PER_LSB;
-  z = -yi * RAD_PER_LSB;
+  // read in the coordinate frame of the sensor chip
+  return chipToRobotFrame(gyroReadRawUncalibrated() * RAD_PER_LSB);
 }

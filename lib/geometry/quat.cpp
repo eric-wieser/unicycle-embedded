@@ -12,6 +12,13 @@
 #include <math.h>
 #include "quat.h"
 
+namespace geometry {
+
+// a vector is equivalent to a quaternion with no real part
+quat::quat(Vector3<float> v) : quat(0, v.x, v.y, v.z) {
+}
+quat::quat(float k) : quat(k, 0, 0, 0) {}
+
 quat::quat(float xx, float yy, float zz, float ww)
   : x(xx), y(yy), z(zz), w(ww)
 {
@@ -47,6 +54,13 @@ quat quat::conj() const // conjugate unit quaternion
 //  return quat(w, -x, -y, -z);
 //}
 
+quat quat::operator* (float f) const {
+  return quat(q.x*f, q.y*f, q.z*f);
+}
+quat quat::operator/ (float f) const {
+  return quat(q.x/f, q.y/f, q.z/f);
+}
+
 quat quat::operator* (const quat &q) const
 {
 
@@ -73,11 +87,13 @@ quat quat::operator* (const quat &q) const
 
 //From p.12
 
-void quat::euler(float &phi, float &theta, float &psi) const
+euler_angle quat::euler() const
 {
-  phi = atan2(2*z*w+2*x*y, w*w-z*z-y*y+x*x);
-  theta = -asin(2*y*w-2*x*z);
-  psi = atan2(2*y*z+2*x*w, y*y+x*x-w*w-z*z);
+  euler_angle e;
+  e.phi   = atan2(2*z*w+2*x*y, w*w-z*z-y*y+x*x);
+  e.theta = -asin(2*y*w-2*x*z);
+  e.psi   = atan2(2*y*z+2*x*w, y*y+x*x-w*w-z*z);
+  return e;
 }
 
 //void quat::euler(float &phi, float &theta, float &psi)
@@ -87,3 +103,4 @@ void quat::euler(float &phi, float &theta, float &psi) const
 //  psi = atan2(2*x*y+2*w*z, x*x+w*w-z*z-y*y);
 //}
 
+}

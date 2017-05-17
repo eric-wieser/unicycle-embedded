@@ -14,6 +14,9 @@
 
 // Our library includes
 #include <messaging.h>
+#include <quat.h>
+#include <euler.h>
+#include <vector3.h>
 
 // Local includes
 #include "io.h"
@@ -91,9 +94,8 @@ struct StateTracker {
   float x_pos = 0;
   float y_pos = 0;
 
-  quat q = quat(1, 0, 0, 0);      // identity quaternion with no rotation
-
-  float w0[3] = {0.0, 0.0, 0.0}; // keeping track of the velocity
+  geometry::quat q = geometry::quat(1, 0, 0, 0);      // identity quaternion with no rotation
+  geometry::Vector3<float> w0 = geometry::Vector3<float>::Zero(); // keeping track of the velocity
 
   void pre_update() {
     intAngleTT = getTTangle();
@@ -102,17 +104,15 @@ struct StateTracker {
 
   void update(LogEntry& l) {
     // read the gyro
-    float w[3];
-    gyroRead(w[0], w[1], w[2]);
+    geometry::Vector3<float> w = gyroRead();
 
-    // read the accelerometer
-    float ddx, ddy, ddz;          // accelerometer readings [m/s^2]
-    accelRead(ddx, ddy, ddz);
+    // read the accelerometer [m/s^2]
+    geometry::Vector3<float> acc = accelRead();
 
     // compute euler angles and their derivatives
     // Here roll pitch and yaw now match x,y,z orientationally (TODO: what?)
-    euler_angle orient;
-    euler_angle d_orient;
+    geometry::euler_angle orient;
+    geometry::euler_angle d_orient;
     intAngVel(q, w0, w, orient, d_orient);
 
     // Turntable angle
@@ -162,9 +162,9 @@ struct StateTracker {
     //-0.2+((float)rand()/(float)(RAND_MAX))*0.2;
 
     // We may need the accelerations for calibrating the start measurements
-    l.ddx = ddx;
-    l.ddy = ddy;
-    l.ddz = ddz;
+    l.ddx = acc.x;
+    l.ddy = acc.y;
+    l.ddz = acc.z;
   }
 };
 
@@ -367,8 +367,8 @@ void setup() {
 
   delay(2000);
 
-  float dx, dy, dz;
-  gyroRead(dx, dy, dz);
+  // triggers calibration
+  gyroRead();
 
   logging::info("All done");
 

@@ -8,23 +8,20 @@
 //TODO: Cleanup extra bits commented out
 
 #include "intAngVel.h"
-#include "quat.h"                      // quaternion library
+
+using namespace geometry;
 
 void intAngVel(quat& q,
-               float *w0,
-               const float *w,
+               Vector3<float> &w0,
+               const Vector3<float> &w,
                euler_angle &orient,
                euler_angle &dorient)
 {
-  float w_mean[3];
-  for (int i = 0; i < 3; i++) {
-    w_mean[i] = (w[i] + w0[i]) / 2.0;
-  }
+  Vector3<float> w_mean = (w + w0) / 2.0;
 
   //Here below is the conversion from local angular velocities into a position quaternion.
   // Here we have the area under the speed curve - the position!
   quat p(1 + (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
-
          (w_mean[0]*dt/2.0) - (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
          (w_mean[1]*dt/2.0) + (w_mean[2]*dt/2.0)*(w_mean[0]*dt/2.0),
          (w_mean[2]*dt/2.0) - (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0));
@@ -36,12 +33,15 @@ void intAngVel(quat& q,
   quat q1 = p1*q;
   q1.normalize();       // unit quaternion to represent the next position after a tiny timestep forward
 
-  q.euler(orient.phi, orient.theta, orient.psi);             // extract Euler angles (currently in 1,2,3)
+  // extract Euler angles (currently in 1,2,3)
+  orient = q.euler();
 
-  float phi1, theta1, psi1;
-  q1.euler(phi1, theta1, psi1);         // extract Euler angles after small timestep (currently in 1,2,3)
-  dorient.phi   = (phi1 - orient.phi)/(dt/10);
-  dorient.theta = (theta1 - orient.theta)/(dt/10);
-  dorient.psi   = (psi1 - orient.psi)/(dt/10); // instantaneous Euler velocities
-  for (int i=0; i<3; i++) w0[i] = w[i]; // save speeds for next call
+  // extract Euler angles after small timestep (currently in 1,2,3)
+  euler_angle e1 = q1.euler();
+  dorient.phi   = (e1.phi   - orient.phi)/(dt/10);
+  dorient.theta = (e1.theta - orient.theta)/(dt/10);
+  dorient.psi   = (e1.psi   - orient.psi)/(dt/10); // instantaneous Euler velocities
+
+  // save speeds for next call
+  w0 = w;
 }
