@@ -21,6 +21,9 @@ quat::quat(Vector3<float> v) : quat(0, v.x, v.y, v.z) {}
 // a scalar is a quaternion with only a real part
 quat::quat(float k) : quat(k, 0, 0, 0) {}
 
+// mixed vector scalar constructor
+quat::quat(float k, Vector3<float> v) : quat(k, v.x, v.y, v.z) {}
+
 quat::quat(float xx, float yy, float zz, float ww)
   : x(xx), y(yy), z(zz), w(ww)
 {
@@ -31,9 +34,12 @@ quat::quat(float xx, float yy, float zz, float ww)
 //{
 //}
 
-void quat::normalize()
-{
-  *this /= sqrt(x*x+y*y+z*z+w*w);
+float quat::norm() const {
+  return sqrt(x*x+y*y+z*z+w*w);
+}
+
+void quat::normalize() {
+  *this /= norm();
 }
 
 quat quat::conj() const // conjugate unit quaternion
@@ -121,5 +127,18 @@ euler_angle quat::euler() const
 //  theta = -asin(2*x*z-2*w*y);
 //  psi = atan2(2*x*y+2*w*z, x*x+w*w-z*z-y*y);
 //}
+
+Vector3<float> quat::v() const {
+  return Vector3<float>(y, z, w);
+}
+
+// https://math.stackexchange.com/q/1030737/1896
+quat exp(const quat &q) {
+  float n = q.y*q.y + q.z*q.z + q.w*q.w;
+  return ::exp(q.x) * quat(
+    cos(n),
+    sin(n) * q.v() / n
+  );
+}
 
 }
