@@ -145,7 +145,7 @@ struct StateTracker {
     l.yaw   = orient.psi;      // yaw angle
     l.pitch = orient.theta;    // pitch angle
 
-    l.dAngleW = dAngleW;       // Wheel angular velocity
+    l.dAngleW = dAngleW + d_orient.theta; // Wheel angular velocity
     l.dAngleTT = dAngleTT;     // turn table angular velocity
     l.xOrigin = xOrigin;       // x position of origin in self centered coord
     l.yOrigin = yOrigin;       // y position of origin in self centered coord
@@ -155,7 +155,7 @@ struct StateTracker {
     //l.dyOrigin;              // y velocity of origin in self centered coord
     l.x = x_pos;               // x position
     l.y = y_pos;               // y position
-    l.AngleW  = AngleW;        // wheel angle
+    l.AngleW  = AngleW + orient.theta; // wheel angle
     l.AngleTT = AngleTT;       // turn table angle
     l.TurntableInput = policyTurntable(l); // control torque for turntable
     l.WheelInput = policyWheel(l); // control torque for wheel
