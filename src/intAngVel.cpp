@@ -11,7 +11,24 @@
 
 using namespace geometry;
 
+/**
+ * @brief      Integrate from a starting quaternion, applying an angular
+ *             velocity
+ *
+ * @param[in]  q0    The initial quaternion, q(t)
+ * @param[in]  w     The angular velocity
+ * @param[in]  dt    The timestep to integrate over
+ *
+ * @return     The quaternion at q(t + dt)
+ */
+quat integrate_quat(const quat &q0, const Vector3<float> &w, float dt) {
+  // from integrating $\dot{q} = 0.5 \omega q$
+  return exp(0.5*quat(w)*dt) * q0;
+}
+
 quat integrate_quat_fast(const quat &q0, const Vector3<float> &w, float dt) {
+  // as above, approximating `exp(x)` as `1 + x`. This was previously used for
+  // small timesteps
   return (1 + 0.5*quat(w)*dt) * q0;
 }
 
@@ -32,15 +49,17 @@ void intAngVel(quat& q,
                joint_angles &orient,
                joint_angles &dorient)
 {
+  // normalizing is not strictly necessary but numerical error buildup happens
+  // otherwise
 
   // extract Euler angles after integrating with mean angular velocity
-  q = integrate_quat_aleksi(q, (w + w0) / 2.0, dt);
+  q = integrate_quat(q, (w + w0) / 2.0, dt);
   q.normalize();
   orient = q;
 
   // extract Euler angles after small timestep
   float dt_small = dt/10;
-  quat q1 = integrate_quat_fast(q, w, dt_small);
+  quat q1 = integrate_quat(q, w, dt_small);
   q1.normalize();
 
   // approximate instantaneous Euler velocities
