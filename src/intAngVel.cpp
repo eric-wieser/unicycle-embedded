@@ -16,12 +16,17 @@ void intAngVel(quat& q,
                euler_angle &orient,
                euler_angle &dorient)
 {
+  float w_mean[3];
+  for (int i = 0; i < 3; i++) {
+    w_mean[i] = (w[i] + w0[i]) / 2.0;
+  }
+
   //Here below is the conversion from local angular velocities into a position quaternion.
   // Here we have the area under the speed curve - the position!
-  quat p( 1+((w0[0]+w[0])*dt/4.0)*((w0[1]+w[1])*dt/4.0)*((w0[2]+w[2])*dt/4.0),
-          (w0[0]+w[0])*dt/4.0 - ((w0[1]+w[1])*dt/4.0)*((w0[2]+w[2])*dt/4.0),
-          (w0[1]+w[1])*dt/4.0 + ((w0[0]+w[0])*dt/4.0)*((w0[2]+w[2])*dt/4.0),
-          (w0[2]+w[2])*dt/4.0 - ((w0[0]+w[0])*dt/4.0)*((w0[1]+w[1])*dt/4.0));
+  quat p(1 + (w_mean[0]*dt/2.0) * (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
+             (w_mean[0]*dt/2.0) - (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
+             (w_mean[1]*dt/2.0) + (w_mean[0]*dt/2.0)*(w_mean[2]*dt/2.0),
+             (w_mean[2]*dt/2.0) - (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0));
 
   q = p*q;
   q.normalize();               // new unit quaternion = previous position q + local integration p
