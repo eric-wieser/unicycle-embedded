@@ -97,6 +97,8 @@ struct StateTracker {
   geometry::quat q = geometry::quat(1, 0, 0, 0);      // identity quaternion with no rotation
   geometry::Vector3<float> w0 = geometry::Vector3<float>::Zero(); // keeping track of the velocity
 
+  joint_angles orient = joint_angles(0, 0, 0);
+
   void pre_update() {
     intAngleTT = getTTangle();
     intAngleW = getWangle();
@@ -110,7 +112,6 @@ struct StateTracker {
     geometry::Vector3<float> acc = accelRead();
 
     // compute euler angles and their derivatives
-    joint_angles orient;
     joint_angles d_orient;
     intAngVel(q, w0, w, orient, d_orient);
 

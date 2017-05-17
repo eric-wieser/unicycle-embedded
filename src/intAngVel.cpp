@@ -8,6 +8,7 @@
 //TODO: Cleanup extra bits commented out
 
 #include "intAngVel.h"
+#include <math.h>
 
 using namespace geometry;
 
@@ -42,6 +43,15 @@ quat integrate_quat_aleksi(const quat &q0, const Vector3<float> &w, float dt) {
          (w[2]*dt/2.0) - (w[0]*dt/2.0)*(w[1]*dt/2.0));
   return p * q0;
 }
+/**
+ * Returns a new angle such that:
+ *   result === next  mod 2pi
+ *   abs(next - last) < pi
+ */
+float unwrap_angle(float next, float last) {
+  // remainder rounds to nearest, limiting to [-pi,pi]
+  return last + remainder(next - last, 2*M_PI);
+}
 
 void intAngVel(quat& q,
                Vector3<float> &w0,
@@ -51,11 +61,15 @@ void intAngVel(quat& q,
 {
   // normalizing is not strictly necessary but numerical error buildup happens
   // otherwise
+  joint_angles old_orient = orient;
 
   // extract Euler angles after integrating with mean angular velocity
   q = integrate_quat(q, (w + w0) / 2.0, dt);
   q.normalize();
   orient = q;
+
+  // remove discontinuities in yaw
+  orient.psi = unwrap_angle(orient.psi, old_orient.psi);
 
   // extract Euler angles after small timestep
   float dt_small = dt/10;
@@ -64,6 +78,7 @@ void intAngVel(quat& q,
 
   // approximate instantaneous Euler velocities
   joint_angles e1 = q1;
+  e1.psi = unwrap_angle(e1.psi, orient.psi);
   dorient.phi   = (e1.phi   - orient.phi)/dt_small;
   dorient.theta = (e1.theta - orient.theta)/dt_small;
   dorient.psi   = (e1.psi   - orient.psi)/dt_small;
