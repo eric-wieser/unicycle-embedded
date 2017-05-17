@@ -6,7 +6,8 @@
 // Carl Edward Rasmussen, 2011-09-28
 // Aleksi Tukiainen, 2016-05-20
 
-// Note: The most common quaternion representation is (w,x,y,z)
+// The quaternion quat(x,y,z,w) represents x + y i + z j + w k
+// Note: The names of the variables are usually ordered as (w,x,y,z)
 // That representation is written in comments
 
 #include <math.h>
@@ -15,8 +16,9 @@
 namespace geometry {
 
 // a vector is equivalent to a quaternion with no real part
-quat::quat(Vector3<float> v) : quat(0, v.x, v.y, v.z) {
-}
+quat::quat(Vector3<float> v) : quat(0, v.x, v.y, v.z) {}
+
+// a scalar is a quaternion with only a real part
 quat::quat(float k) : quat(k, 0, 0, 0) {}
 
 quat::quat(float xx, float yy, float zz, float ww)
@@ -31,18 +33,8 @@ quat::quat(float xx, float yy, float zz, float ww)
 
 void quat::normalize()
 {
-  float m = sqrt(x*x+y*y+z*z+w*w);
-  x /= m;
-  y /= m;
-  z /= m;
-  w /= m;
+  *this /= sqrt(x*x+y*y+z*z+w*w);
 }
-
-//void quat::normalize()
-//{
-//  float m = sqrt(x*x+y*y+z*z+w*w);
-//   w /= m; x /= m; y /= m; z /= m;
-//}
 
 quat quat::conj() const // conjugate unit quaternion
 {
@@ -54,13 +46,40 @@ quat quat::conj() const // conjugate unit quaternion
 //  return quat(w, -x, -y, -z);
 //}
 
-quat quat::operator* (float f) const {
-  return quat(q.x*f, q.y*f, q.z*f);
-}
-quat quat::operator/ (float f) const {
-  return quat(q.x/f, q.y/f, q.z/f);
+// basic arithmetic operators
+quat& quat::operator+= (quat q) {
+  x += q.x;
+  y += q.y;
+  z += q.z;
+  w += q.w;
+  return *this;
 }
 
+quat& quat::operator-= (quat q) {
+  x -= q.x;
+  y -= q.y;
+  z -= q.z;
+  w -= q.w;
+  return *this;
+}
+
+quat& quat::operator*= (float f) {
+  x *= f;
+  y *= f;
+  z *= f;
+  w *= f;
+  return *this;
+}
+
+quat& quat::operator/= (float f) {
+  x /= f;
+  y /= f;
+  z /= f;
+  w /= f;
+  return *this;
+}
+
+// quaternion multiplication
 quat quat::operator* (const quat &q) const
 {
 
