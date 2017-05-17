@@ -23,10 +23,11 @@ void intAngVel(quat& q,
 
   //Here below is the conversion from local angular velocities into a position quaternion.
   // Here we have the area under the speed curve - the position!
-  quat p(1 + (w_mean[0]*dt/2.0) * (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
-             (w_mean[0]*dt/2.0) - (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
-             (w_mean[1]*dt/2.0) + (w_mean[0]*dt/2.0)*(w_mean[2]*dt/2.0),
-             (w_mean[2]*dt/2.0) - (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0));
+  quat p(1 + (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
+
+         (w_mean[0]*dt/2.0) - (w_mean[1]*dt/2.0)*(w_mean[2]*dt/2.0),
+         (w_mean[1]*dt/2.0) + (w_mean[2]*dt/2.0)*(w_mean[0]*dt/2.0),
+         (w_mean[2]*dt/2.0) - (w_mean[0]*dt/2.0)*(w_mean[1]*dt/2.0));
 
   q = p*q;
   q.normalize();               // new unit quaternion = previous position q + local integration p
