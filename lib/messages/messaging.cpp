@@ -9,6 +9,8 @@
 
 #include <messaging.h>
 
+#include "nanopb_helpers.h"
+
 
 template <typename T> typename messageHandlers<T>::type messageHandlers<T>::handler;
 
@@ -25,42 +27,6 @@ namespace {
     packetio::COBSStream cobs_in(Serial);
 
     packetio::PacketListener listener(cobs_in);
-
-    //! simple wrapper type to pass array length into write_array
-    template <typename T>
-    struct array_handle {
-        T* ptr;
-        size_t len;
-    };
-
-    //! nanopb callback for writing a string
-    bool write_string(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
-    {
-        auto argval = *arg;
-        auto handle = *reinterpret_cast<array_handle<const uint8_t>*>(argval);
-
-        if (!pb_encode_tag_for_field(stream, field))
-            return false;
-
-        return pb_encode_string(stream, handle.ptr, handle.len);
-    }
-
-    //! nanopb callback for writing an array
-    template<typename T, const pb_field_t* fields>
-    bool write_array(pb_ostream_t * stream, const pb_field_t *field, void * const *arg)
-    {
-        auto argval = *arg;
-        auto handle = *reinterpret_cast<array_handle<T>*>(argval);
-
-        for(size_t i = 0; i < handle.len; i++) {
-            if (!pb_encode_tag_for_field(stream, field))
-                return false;
-            T* curr = handle.ptr + i;
-            if (!pb_encode_submessage(stream, fields, curr))
-                return false;
-        }
-        return true;
-    }
 
     //! Send a message object over serial, using protobuf and cobs
     void sendMessage(RobotMessage& message) {
@@ -167,12 +133,12 @@ void updateMessaging() {
 namespace logging {
     //! send a debug string
     void log(DebugLevel level, const char* text, size_t n) {
-        array_handle<const char> arr = {text, n};
+        nanopb_helpers::array_handle<const char> arr = {text, n};
 
         // fill out the message
         RobotMessage message = RobotMessage_init_zero;
         message.which_msg = RobotMessage_debug_tag;
-        message.msg.debug.s.funcs.encode = write_string;
+        message.msg.debug.s.funcs.encode = nanopb_helpers::write_string;
         message.msg.debug.s.arg = &arr;
         message.msg.debug.level = level;
 
@@ -185,12 +151,13 @@ namespace logging {
 
 //! send log messages
 void sendLogBundle(const LogEntry* entries, size_t n) {
-    array_handle<const LogEntry> arr = {entries, n};
+    nanopb_helpers::array_handle<const LogEntry> arr = {entries, n};
 
     // fill out the message
     RobotMessage message = RobotMessage_init_zero;
     message.which_msg = RobotMessage_log_bundle_tag;
-    message.msg.log_bundle.entry.funcs.encode = &write_array<const LogEntry, LogEntry_fields>;
+    message.msg.log_bundle.entry.funcs.encode
+        = &nanopb_helpers::write_array<const LogEntry, LogEntry_fields>;
     message.msg.log_bundle.entry.arg = &arr;
 
     sendMessage(message);
