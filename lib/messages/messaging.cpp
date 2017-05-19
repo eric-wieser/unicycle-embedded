@@ -17,6 +17,7 @@ template struct messageHandlers<Go>;
 template struct messageHandlers<Stop>;
 template struct messageHandlers<Controller>;
 template struct messageHandlers<GetLogs>;
+template struct messageHandlers<CalibrateGyro>;
 
 namespace {
     //! our cobs packetizer
@@ -108,6 +109,7 @@ namespace {
             case PCMessage_go_tag:         run_handler(messageHandlers<Go>::handler, message.msg.go); return;
             case PCMessage_stop_tag:       run_handler(messageHandlers<Stop>::handler, message.msg.stop); return;
             case PCMessage_get_logs_tag:   run_handler(messageHandlers<GetLogs>::handler, message.msg.get_logs); return;
+            case PCMessage_calibrate_tag:  run_handler(messageHandlers<CalibrateGyro>::handler, message.msg.calibrate); return;
             default:
                 logging::error("Message type unknown");
                 logging::error(reinterpret_cast<char*>(data), n);

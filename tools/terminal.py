@@ -282,6 +282,12 @@ class Commands(CommandBase):
         self.print_pb_message(msg)
         self.send(msg)
 
+    async def run_calibrate(self):
+        msg = messages_pb2.PCMessage()
+        msg.calibrate.SetInParent()
+        self.send(msg)
+
+
     # next come the command parsers
 
     async def do_connect(self, arg):
@@ -354,6 +360,17 @@ class Commands(CommandBase):
             return
         await self.run_policy(matfile=arg)
 
+    @requires_connection
+    async def do_calibrate(self, arg):
+        """
+        calibrate the gyro
+        ::
+            calibrate
+        """
+        if arg:
+            self.error("calibrate takes no argument")
+            return
+        await self.run_calibrate()
 
 def enable_win_unicode_console():
     if sys.version_info >= (3, 6):

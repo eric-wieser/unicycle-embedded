@@ -260,6 +260,21 @@ void request_stop() {
   digitalWrite(pins::LED, LOW);
 }
 
+
+void do_gyro_calibrate() {
+  logging::info("Beginning gyro calibration");
+  geometry::Vector3<float> std = gyroCalibrate();
+  {
+    // string formatting sucks in C
+    char msg[256];
+    snprintf(msg, sizeof(msg),
+      "Calibrated! \u03c3 = [%f, %f, %f] rad/s",
+      std.x, std.y, std.z);
+    logging::info(msg);
+  }
+}
+
+
 // set up the message handlers
 auto on_go = [](const Go& go) {
   // default to the maximum number of steps
@@ -325,6 +340,11 @@ auto on_get_logs = [](const GetLogs& getLogs) {
     sendLogBundle(bulk.logs, 0);
   }
 };
+auto on_calibrate = [](const CalibrateGyro& msg) {
+  if (mode == Mode::IDLE) {
+    do_gyro_calibrate();
+  }
+};
 
 // main function to setup the test
 void setup() {
@@ -335,6 +355,7 @@ void setup() {
   onMessage<Stop>(&on_stop);
   onMessage<Controller>(setPolicy);
   onMessage<GetLogs>(&on_get_logs);
+  onMessage<CalibrateGyro>(&on_calibrate);
 
   pinMode(pins::LED, OUTPUT);
   digitalWrite(pins::LED, LOW);
@@ -365,17 +386,7 @@ void setup() {
   // setMotorWheel(0);
   // delay(100);
 
-  logging::info("Beginning gyro calibration");
-  geometry::Vector3<float> std = gyroCalibrate();
-  {
-    // string formatting sucks in C
-    char msg[256];
-    snprintf(msg, sizeof(msg),
-      "Calibrated! \u03c3 = %f, %f, %f rad/s",
-      std.x, std.y, std.z);
-    logging::info(msg);
-  }
-
+  do_gyro_calibrate();
   logging::info("All done");
 
   // start the control loop timer

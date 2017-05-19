@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\xce\x01\n\x0cLinearPolicy\x12\x0e\n\x06k_bias\x18\x01 \x01(\x02\x12\x0f\n\x07k_droll\x18\x02 \x01(\x02\x12\x0e\n\x06k_dyaw\x18\x03 \x01(\x02\x12\x11\n\tk_dAngleW\x18\x04 \x01(\x02\x12\x10\n\x08k_dpitch\x18\x05 \x01(\x02\x12\x12\n\nk_dAngleTT\x18\x06 \x01(\x02\x12\x11\n\tk_xOrigin\x18\x07 \x01(\x02\x12\x11\n\tk_yOrigin\x18\x08 \x01(\x02\x12\x0e\n\x06k_roll\x18\t \x01(\x02\x12\r\n\x05k_yaw\x18\n \x01(\x02\x12\x0f\n\x07k_pitch\x18\x0b \x01(\x02\"L\n\nController\x12\x1c\n\x05wheel\x18\x01 \x01(\x0b\x32\r.LinearPolicy\x12 \n\tturntable\x18\x02 \x01(\x0b\x32\r.LinearPolicy\"}\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12!\n\ncontroller\x18\x03 \x01(\x0b\x32\x0b.ControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"5\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\x12\x1a\n\x05level\x18\x02 \x01(\x0e\x32\x0b.DebugLevel\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msg*6\n\nDebugLevel\x12\t\n\x05\x44\x45\x42UG\x10\x00\x12\x08\n\x04INFO\x10\x01\x12\x08\n\x04WARN\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\x0f\n\rCalibrateGyro\"\xce\x01\n\x0cLinearPolicy\x12\x0e\n\x06k_bias\x18\x01 \x01(\x02\x12\x0f\n\x07k_droll\x18\x02 \x01(\x02\x12\x0e\n\x06k_dyaw\x18\x03 \x01(\x02\x12\x11\n\tk_dAngleW\x18\x04 \x01(\x02\x12\x10\n\x08k_dpitch\x18\x05 \x01(\x02\x12\x12\n\nk_dAngleTT\x18\x06 \x01(\x02\x12\x11\n\tk_xOrigin\x18\x07 \x01(\x02\x12\x11\n\tk_yOrigin\x18\x08 \x01(\x02\x12\x0e\n\x06k_roll\x18\t \x01(\x02\x12\r\n\x05k_yaw\x18\n \x01(\x02\x12\x0f\n\x07k_pitch\x18\x0b \x01(\x02\"L\n\nController\x12\x1c\n\x05wheel\x18\x01 \x01(\x0b\x32\r.LinearPolicy\x12 \n\tturntable\x18\x02 \x01(\x0b\x32\r.LinearPolicy\"\xa2\x01\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12!\n\ncontroller\x18\x03 \x01(\x0b\x32\x0b.ControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x12#\n\tcalibrate\x18\x05 \x01(\x0b\x32\x0e.CalibrateGyroH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"5\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\x12\x1a\n\x05level\x18\x02 \x01(\x0e\x32\x0b.DebugLevel\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msg*6\n\nDebugLevel\x12\t\n\x05\x44\x45\x42UG\x10\x00\x12\x08\n\x04INFO\x10\x01\x12\x08\n\x04WARN\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -49,8 +49,8 @@ _DEBUGLEVEL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=995,
-  serialized_end=1049,
+  serialized_start=1050,
+  serialized_end=1104,
 )
 _sym_db.RegisterEnumDescriptor(_DEBUGLEVEL)
 
@@ -138,6 +138,30 @@ _GETLOGS = _descriptor.Descriptor(
   ],
   serialized_start=47,
   serialized_end=56,
+)
+
+
+_CALIBRATEGYRO = _descriptor.Descriptor(
+  name='CalibrateGyro',
+  full_name='CalibrateGyro',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=58,
+  serialized_end=73,
 )
 
 
@@ -237,8 +261,8 @@ _LINEARPOLICY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=59,
-  serialized_end=265,
+  serialized_start=76,
+  serialized_end=282,
 )
 
 
@@ -275,8 +299,8 @@ _CONTROLLER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=267,
-  serialized_end=343,
+  serialized_start=284,
+  serialized_end=360,
 )
 
 
@@ -315,6 +339,13 @@ _PCMESSAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='calibrate', full_name='PCMessage.calibrate', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -330,8 +361,8 @@ _PCMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='PCMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=345,
-  serialized_end=470,
+  serialized_start=363,
+  serialized_end=525,
 )
 
 
@@ -487,8 +518,8 @@ _LOGENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=473,
-  serialized_end=777,
+  serialized_start=528,
+  serialized_end=832,
 )
 
 
@@ -518,8 +549,8 @@ _LOGBUNDLE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=779,
-  serialized_end=816,
+  serialized_start=834,
+  serialized_end=871,
 )
 
 
@@ -556,8 +587,8 @@ _DEBUGMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=818,
-  serialized_end=871,
+  serialized_start=873,
+  serialized_end=926,
 )
 
 
@@ -604,8 +635,8 @@ _ROBOTMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='RobotMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=873,
-  serialized_end=993,
+  serialized_start=928,
+  serialized_end=1048,
 )
 
 _CONTROLLER.fields_by_name['wheel'].message_type = _LINEARPOLICY
@@ -614,6 +645,7 @@ _PCMESSAGE.fields_by_name['go'].message_type = _GO
 _PCMESSAGE.fields_by_name['stop'].message_type = _STOP
 _PCMESSAGE.fields_by_name['controller'].message_type = _CONTROLLER
 _PCMESSAGE.fields_by_name['get_logs'].message_type = _GETLOGS
+_PCMESSAGE.fields_by_name['calibrate'].message_type = _CALIBRATEGYRO
 _PCMESSAGE.oneofs_by_name['msg'].fields.append(
   _PCMESSAGE.fields_by_name['go'])
 _PCMESSAGE.fields_by_name['go'].containing_oneof = _PCMESSAGE.oneofs_by_name['msg']
@@ -626,6 +658,9 @@ _PCMESSAGE.fields_by_name['controller'].containing_oneof = _PCMESSAGE.oneofs_by_
 _PCMESSAGE.oneofs_by_name['msg'].fields.append(
   _PCMESSAGE.fields_by_name['get_logs'])
 _PCMESSAGE.fields_by_name['get_logs'].containing_oneof = _PCMESSAGE.oneofs_by_name['msg']
+_PCMESSAGE.oneofs_by_name['msg'].fields.append(
+  _PCMESSAGE.fields_by_name['calibrate'])
+_PCMESSAGE.fields_by_name['calibrate'].containing_oneof = _PCMESSAGE.oneofs_by_name['msg']
 _LOGBUNDLE.fields_by_name['entry'].message_type = _LOGENTRY
 _DEBUGMESSAGE.fields_by_name['level'].enum_type = _DEBUGLEVEL
 _ROBOTMESSAGE.fields_by_name['log_bundle'].message_type = _LOGBUNDLE
@@ -643,6 +678,7 @@ _ROBOTMESSAGE.fields_by_name['single_log'].containing_oneof = _ROBOTMESSAGE.oneo
 DESCRIPTOR.message_types_by_name['Go'] = _GO
 DESCRIPTOR.message_types_by_name['Stop'] = _STOP
 DESCRIPTOR.message_types_by_name['GetLogs'] = _GETLOGS
+DESCRIPTOR.message_types_by_name['CalibrateGyro'] = _CALIBRATEGYRO
 DESCRIPTOR.message_types_by_name['LinearPolicy'] = _LINEARPOLICY
 DESCRIPTOR.message_types_by_name['Controller'] = _CONTROLLER
 DESCRIPTOR.message_types_by_name['PCMessage'] = _PCMESSAGE
@@ -672,6 +708,13 @@ GetLogs = _reflection.GeneratedProtocolMessageType('GetLogs', (_message.Message,
   # @@protoc_insertion_point(class_scope:GetLogs)
   ))
 _sym_db.RegisterMessage(GetLogs)
+
+CalibrateGyro = _reflection.GeneratedProtocolMessageType('CalibrateGyro', (_message.Message,), dict(
+  DESCRIPTOR = _CALIBRATEGYRO,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:CalibrateGyro)
+  ))
+_sym_db.RegisterMessage(CalibrateGyro)
 
 LinearPolicy = _reflection.GeneratedProtocolMessageType('LinearPolicy', (_message.Message,), dict(
   DESCRIPTOR = _LINEARPOLICY,

@@ -9,6 +9,8 @@ message Stop {
 }
 message GetLogs {
 }
+message CalibrateGyro {
+}
 
 message LinearPolicy {
   float k_bias     =  1; // constant bias
@@ -36,6 +38,7 @@ message PCMessage {
     Stop stop = 2;
     Controller controller = 3;
     GetLogs get_logs = 4;
+    CalibrateGyro calibrate = 5;
   }
 }
 
