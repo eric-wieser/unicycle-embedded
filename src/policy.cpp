@@ -62,14 +62,27 @@ void setPolicy(const Controller& new_controller)
 	policyTTParams = new_controller.turntable;
 }
 
+float saturate(float p){
+	// TODO: implement the same saturation as in simulation
+	if (p > 1) {
+		return 1;
+	}
+	else if (p < -1) {
+		return -1;
+	}
+	else {
+		return p;
+	}
+}
+
 //! compute the turntable output from the current policy, given the state
 float policyTurntable(const LogEntry& state)
 {
-	return computePolicy(policyTTParams, state);
+	return saturate(computePolicy(policyTTParams, state));
 }
 
 //! compute the wheel output from the current policy, given the state
 float policyWheel(const LogEntry& state)
 {
-	return computePolicy(policyWheelParams, state);
+	return saturate(computePolicy(policyWheelParams, state));
 }
