@@ -365,10 +365,16 @@ void setup() {
   // setMotorWheel(0);
   // delay(100);
 
-  delay(2000);
-
-  // triggers calibration
-  gyroRead();
+  logging::info("Beginning gyro calibration");
+  geometry::Vector3<float> std = gyroCalibrate();
+  {
+    // string formatting sucks in C
+    char msg[256];
+    snprintf(msg, sizeof(msg),
+      "Calibrated! \u03c3 = %f, %f, %f rad/s",
+      std.x, std.y, std.z);
+    logging::info(msg);
+  }
 
   logging::info("All done");
 

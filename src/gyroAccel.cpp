@@ -78,6 +78,8 @@ namespace {
   {
     I2CRead(0xd0, reg, data, length);
   }
+
+  Vector3<float> gyro_offset;  // in internal units, stored as float for extra precision
 }
 
 //! Initialize the connection to the accelerometer and gyro
@@ -116,6 +118,28 @@ Vector3<T> chipToRobotFrame(Vector3<T> v_chip) {
   return v_frame;
 }
 
+/**
+ * \brief Convert from the raw chip reading to radians per second, in the robot
+ *        frame
+ */
+template<typename T>
+Vector3<float> gyroRawToSI(Vector3<T> raw) {
+  // LSB/(deg/s) and (rad/s) / lsb, respectively
+  const float LSB_S_PER_DEG = 14.375;  // from datasheet
+  const float RAD_PER_LSB_S = (M_PI / 180) / LSB_S_PER_DEG;
+  return chipToRobotFrame(raw * RAD_PER_LSB_S);
+}
+
+/**
+ * \brief Convert from the raw chip reading to meters per second squared, in the
+ *        robot frame
+ */
+template<typename T>
+Vector3<float> accRawToSI(Vector3<T> raw) {
+  const float SI_PER_LSB = 9.82 / 2048.0;  // conversion factor from 13 bit to m/s^2
+  return chipToRobotFrame(raw * SI_PER_LSB);
+}
+
 //! Read the raw values of the accelerometer, in internal frame and units
 Vector3<int16_t> accelReadRaw()
 {
@@ -133,13 +157,11 @@ Vector3<int16_t> accelReadRaw()
 //! Get the acceleration in m s^-2, in the robot frame
 Vector3<float> accelRead()
 {
-  const float SI_PER_LSB = 9.82 / 2048.0;  // conversion factor from 13 bit to m/s^2
-
-  return chipToRobotFrame(accelReadRaw() * SI_PER_LSB);
+  return accRawToSI(accelReadRaw());
 }
 
 //! Read the raw values of the gyroscope, without subtracting initial values
-Vector3<int16_t> gyroReadRawUncalibrated()
+Vector3<int16_t> gyroReadRaw()
 {
     uint8_t s[6];
     gyroRead(0x1D, s, 6);  // GYRO_XOUT_H - GYRO_ZOUT_L
@@ -152,38 +174,39 @@ Vector3<int16_t> gyroReadRawUncalibrated()
     return omega_i;
 }
 
-//! Read the raw values of the gyroscope, with drift lessened
-Vector3<int16_t> gyroReadRaw()
-{
-  // offset angular velocities (internal frame)
-  static Vector3<int16_t> omega_i0;
-  static bool first = true;
 
-  // calibrate on first run
-  if (first) {
-    first = false;
-    Vector3<int32_t> omega_i_total = Vector3<int32_t>::Zero();
-    const int N = 20;
-    for (int i = 0; i < N; i++) {
-      omega_i_total += gyroReadRawUncalibrated();
-      delay(5);
+//! calibrate the offset for the gyro. Returns the stdev of each component
+Vector3<float> gyroCalibrate(int N) {
+
+  // compute running sum and sum of squares - all of raw values
+  Vector3<int32_t> sum_lsb  = Vector3<int32_t>::Zero();
+  Vector3<int32_t> sum_lsb2 = Vector3<int32_t>::Zero();
+  for (int i = 0; i < N; i++) {
+    delay(5);
+    auto lsb = gyroReadRaw();
+
+    sum_lsb += lsb;
+    for (int i = 0; i < 3; i++) {
+      sum_lsb2[i] += lsb[i] * lsb[i];
     }
-    omega_i0 = omega_i_total / N;
   }
 
-  // Read, subtracting offsets
-  return gyroReadRawUncalibrated() - omega_i0;
+  // compute first and second moments
+  Vector3<float> mean_lsb = sum_lsb; mean_lsb /= N;
+  Vector3<float> std_lsb;
+  for (int i = 0; i < 3; i++) {
+    std_lsb[i] = sqrt(N*sum_lsb2[i] - sum_lsb[i]*sum_lsb[i]) / N;
+  }
+
+  gyro_offset = mean_lsb;
+  // convert to real units
+  return gyroRawToSI(std_lsb);
 }
 
 
 //! Get the angular velocity in the robot frame
 Vector3<float> gyroRead()
 {
-  Vector3<float> omega_frame;
-
-  const float LSB_PER_DEG = 14.375;  // from datasheet
-  const float RAD_PER_LSB = (M_PI / 180) / LSB_PER_DEG;
-
   // read in the coordinate frame of the sensor chip
-  return chipToRobotFrame(gyroReadRawUncalibrated() * RAD_PER_LSB);
+  return gyroRawToSI(gyroReadRaw() - gyro_offset);
 }
