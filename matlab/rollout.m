@@ -1,4 +1,6 @@
 function traj = rollout(start, ctrl, H, plant, cost, verb)
+if nargin < 6; verb = 0; end
+
   this_file = mfilename('fullpath');
   root_dir = fileparts(fileparts(this_file));
   logs_dir = fullfile(root_dir, 'logs');
@@ -27,6 +29,29 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   traj.action = u;
   traj.loss = L;
   traj.dt = plant.dt;
+
+  % TODO: make this optional - full results are useful
+  traj = apply_constraints(traj, H, plant, verb);
+end
+
+function traj = apply_constraints(traj, H, plant, verb)
+  % truncate the trajectory to the portion that does not violate the constraints
+  % this ought to match the pilco rollout logic
+  if ~isfield(plant,'constraint')
+    return;
+  end
+  for i = 1:H
+    if plant.constraint(traj.latent(:,i))
+      if verb; disp('state constraints violated...'); end;
+      H = i - 1;
+      break;
+    end
+  end
+
+  traj.observed = traj.observed(:,1:H+1);
+  traj.latent   = traj.latent(:,1:H+1);
+  traj.action   = traj.action(:,1:H);  % actions happen between states, so are one shorter
+  traj.loss     = traj.loss(:,1:H+1);
 end
 
 function f = uigetfullfile(varargin)
