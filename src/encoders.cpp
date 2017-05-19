@@ -19,12 +19,15 @@ with Line Driver".
 \endrst
 */
 
+#include "encoders.h"
+
 #include <Arduino.h>
 
 #include "io.h"
 #include "pins.h"
 #include "messaging.h"
 #include "gpio.h"
+
 
 // static variables
 namespace {
@@ -54,12 +57,13 @@ namespace {
       // if the timer changed direction, replace it with its negative
       const int sign = negative ? -1 : 1;
       if (last_sign != sign) {
-        tmr.tmxTmr.reg = (short int) -tmr.tmxTmr.reg;
+        tmr.tmxTmr.reg = static_cast<int16_t>(-tmr.tmxTmr.reg);
       }
       last_sign = sign;
     }
 
-    inline int16_t read() const {
+    // this overflows
+    inline wrapping<uint16_t> read() const {
       return last_sign * static_cast<int16_t>(tmr.tmxTmr.reg);
     }
 
@@ -118,14 +122,14 @@ void resetEncoders() {
 }
 
 //! Get the angle of the turntable, in encoder ticks.
-//! Positive is counter-clockwise in the vertical axis
-int16_t getTTangle() {
+//! Increases with counter-clockwise in the vertical axis
+wrapping<uint16_t> getTTangle() {
   // motor is upside-down, so negate
   return -tt_timer.read();
 }
 
 //! Get the angle of the wheel, in encoder ticks.
-//! Positive is forwards
-int16_t getWangle() {
+//! Increases with forwards motion
+wrapping<uint16_t> getWangle() {
   return w_timer.read();
 }

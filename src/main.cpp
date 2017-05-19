@@ -84,11 +84,11 @@ CallbackTimer ctrl_tmr = io::tmr1;
 
 //! handles computing the overall state
 struct StateTracker {
-  int16_t oldAngleTT = 0;  // old value of angle for turntable
-  int16_t intAngleTT = 0;  // intermediate value of angle for turntable
+  wrapping<uint16_t> oldAngleTT = 0;  // old value of angle for turntable
+  wrapping<uint16_t> intAngleTT = 0;  // intermediate value of angle for turntable
   float AngleTT = 0.0;     // turn table angular position variable
-  int16_t oldAngleW = 0;   // old value of angle for wheel
-  int16_t intAngleW = 0;   // intermediate value of angle for wheel
+  wrapping<uint16_t> oldAngleW = 0;   // old value of angle for wheel
+  wrapping<uint16_t> intAngleW = 0;   // intermediate value of angle for wheel
   float AngleW = 0.0;      // wheel angular position variable
 
   float x_pos = 0;
@@ -116,14 +116,14 @@ struct StateTracker {
     intAngVel(q, w0, w, orient, d_orient);
 
     // Turntable angle
-    int16_t newAngleTT = getTTangle();
+    wrapping<uint16_t> newAngleTT = getTTangle();
     float dAngleTT     = (newAngleTT - intAngleTT) / (SPEED_MEASURE_WINDOW * TT_CPRAD);
     float deltaAngleTT = (newAngleTT - oldAngleTT) / TT_CPRAD;
     oldAngleTT = newAngleTT;
     AngleTT += deltaAngleTT;
 
     // Motorwheel angle
-    int16_t newAngleW = getWangle();
+    wrapping<uint16_t> newAngleW = getWangle();
     float dAngleW     = (newAngleW - intAngleW) / (SPEED_MEASURE_WINDOW * W_CPRAD);
     float deltaAngleW = (newAngleW - oldAngleW) / W_CPRAD;
     oldAngleW = newAngleW;
