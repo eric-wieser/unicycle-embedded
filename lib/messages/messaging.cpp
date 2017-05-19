@@ -10,16 +10,9 @@
 #include <messaging.h>
 
 #include "nanopb_helpers.h"
-
+#include "dispatch_impl.h"
 
 template <typename T> typename messageHandlers<T>::type messageHandlers<T>::handler;
-
-
-template struct messageHandlers<Go>;
-template struct messageHandlers<Stop>;
-template struct messageHandlers<Controller>;
-template struct messageHandlers<GetLogs>;
-template struct messageHandlers<CalibrateGyro>;
 
 namespace {
     //! our cobs packetizer
@@ -50,10 +43,17 @@ namespace {
         Serial.flush();
     }
 
-    template<typename T, typename U>
-    inline void run_handler(T t, U arg) {
-        if (t) {
-            t(arg);
+    template<typename T>
+    inline bool try_handlers(const PCMessage &message) {
+        if (message.which_msg == field_info<T>::tag) {
+            auto handler = messageHandlers<T>::handler;
+            if (handler) {
+                handler(message.msg.*(field_info<T>::value));
+            }
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
@@ -71,36 +71,10 @@ namespace {
         }
 
         // dispatch to the appropriate handler
-        switch(message.which_msg) {
-            case PCMessage_controller_tag:
-                run_handler(
-                    messageHandlers<Controller>::handler,
-                    message.msg.controller);
-                return;
-            case PCMessage_go_tag:
-                run_handler(
-                    messageHandlers<Go>::handler,
-                    message.msg.go);
-                return;
-            case PCMessage_stop_tag:
-                run_handler(
-                    messageHandlers<Stop>::handler,
-                    message.msg.stop);
-                return;
-            case PCMessage_get_logs_tag:
-                run_handler(
-                    messageHandlers<GetLogs>::handler,
-                    message.msg.get_logs);
-                return;
-            case PCMessage_calibrate_tag:
-                run_handler(
-                    messageHandlers<CalibrateGyro>::handler,
-                    message.msg.calibrate);
-                return;
-            default:
-                logging::error("Message type unknown");
-                logging::error(reinterpret_cast<char*>(data), n);
-                return;
+        if(!try_handlers(message))
+        {
+            logging::error("Message type unknown");
+            logging::error(reinterpret_cast<char*>(data), n);
         }
     }
 

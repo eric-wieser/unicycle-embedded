@@ -31,6 +31,9 @@ struct messageHandlers {
 };
 
 //! Attach a listener for a given message type
-template<typename T> void onMessage(typename messageHandlers<T>::type handler) {
+template<typename T>
+void onMessage(typename messageHandlers<T>::type handler) {
+    // if this gives an undefined reference, then you haven't followed the
+    // instructions in dispatch.h
     messageHandlers<T>::handler = handler;
 }
