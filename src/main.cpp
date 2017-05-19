@@ -315,11 +315,9 @@ auto on_go = [](const Go& go) {
     logging::info("Request for bulk mode");
   }
 
+  play_starting_noise();
   logging::info("Waiting for button press");
   button::awaitPress();
-
-  logging::info("Starting");
-  play_starting_noise();
 
   // enter the new mode
   mode = target;
