@@ -83,6 +83,13 @@ namespace {
         Serial.flush();
     }
 
+    template<typename T, typename U>
+    inline void run_handler(T t, U arg) {
+        if (t) {
+            t(arg);
+        }
+    }
+
     //! base packet listener
     void handlePacket(uint8_t* data, size_t n) {
         pb_istream_t pb_stream = pb_istream_from_buffer(data, n);
@@ -97,10 +104,10 @@ namespace {
         }
 
         switch(message.which_msg) {
-            case PCMessage_controller_tag: messageHandlers<Controller>::handler.operator ()(message.msg.controller); return;
-            case PCMessage_go_tag:         messageHandlers<Go>::handler.operator ()(message.msg.go); return;
-            case PCMessage_stop_tag:       messageHandlers<Stop>::handler.operator ()(message.msg.stop); return;
-            case PCMessage_get_logs_tag:   messageHandlers<GetLogs>::handler.operator ()(message.msg.get_logs); return;
+            case PCMessage_controller_tag: run_handler(messageHandlers<Controller>::handler, message.msg.controller); return;
+            case PCMessage_go_tag:         run_handler(messageHandlers<Go>::handler, message.msg.go); return;
+            case PCMessage_stop_tag:       run_handler(messageHandlers<Stop>::handler, message.msg.stop); return;
+            case PCMessage_get_logs_tag:   run_handler(messageHandlers<GetLogs>::handler, message.msg.get_logs); return;
             default:
                 logging::error("Message type unknown");
                 logging::error(reinterpret_cast<char*>(data), n);
