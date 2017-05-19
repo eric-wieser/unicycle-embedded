@@ -104,12 +104,33 @@ namespace {
             return;
         }
 
+        // dispatch to the appropriate handler
         switch(message.which_msg) {
-            case PCMessage_controller_tag: run_handler(messageHandlers<Controller>::handler, message.msg.controller); return;
-            case PCMessage_go_tag:         run_handler(messageHandlers<Go>::handler, message.msg.go); return;
-            case PCMessage_stop_tag:       run_handler(messageHandlers<Stop>::handler, message.msg.stop); return;
-            case PCMessage_get_logs_tag:   run_handler(messageHandlers<GetLogs>::handler, message.msg.get_logs); return;
-            case PCMessage_calibrate_tag:  run_handler(messageHandlers<CalibrateGyro>::handler, message.msg.calibrate); return;
+            case PCMessage_controller_tag:
+                run_handler(
+                    messageHandlers<Controller>::handler,
+                    message.msg.controller);
+                return;
+            case PCMessage_go_tag:
+                run_handler(
+                    messageHandlers<Go>::handler,
+                    message.msg.go);
+                return;
+            case PCMessage_stop_tag:
+                run_handler(
+                    messageHandlers<Stop>::handler,
+                    message.msg.stop);
+                return;
+            case PCMessage_get_logs_tag:
+                run_handler(
+                    messageHandlers<GetLogs>::handler,
+                    message.msg.get_logs);
+                return;
+            case PCMessage_calibrate_tag:
+                run_handler(
+                    messageHandlers<CalibrateGyro>::handler,
+                    message.msg.calibrate);
+                return;
             default:
                 logging::error("Message type unknown");
                 logging::error(reinterpret_cast<char*>(data), n);
