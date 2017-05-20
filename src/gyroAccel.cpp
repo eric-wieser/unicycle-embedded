@@ -79,7 +79,13 @@ namespace {
     I2CRead(0xd0, reg, data, length);
   }
 
-  Vector3<float> gyro_offset;  // in internal units, stored as float for extra precision
+  // in internal units, stored as float for extra precision
+  Vector3<float> gyro_offset;
+
+  // measured by hanging the robot by a string upside down, and then negating
+  // this indicates the reading that should correpsond to balancing
+  const Vector3<float> acc_down = Vector3<float>(-0.85, -0.47, 9.90).normalized();
+
 }
 
 //! Initialize the connection to the accelerometer and gyro
@@ -209,4 +215,12 @@ Vector3<float> gyroRead()
 {
   // read in the coordinate frame of the sensor chip
   return gyroRawToSI(gyroReadRaw() - gyro_offset);
+}
+
+
+quat accelOrient(Vector3<float> acc) {
+  return quat::between(acc, acc_down);
+}
+quat accelOrient() {
+  return accelOrient(accelRead());
 }
