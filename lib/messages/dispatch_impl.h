@@ -40,7 +40,8 @@ typedef type_list<
     Stop,
     Controller,
     GetLogs,
-    CalibrateGyro
+    CalibrateGyro,
+    GetAccelerometer
 > msg_types;
 
 /**
@@ -62,6 +63,7 @@ template <typename T> struct field_info {};
     DECLARE_FIELD_INFO(Controller, controller);
     DECLARE_FIELD_INFO(GetLogs, get_logs);
     DECLARE_FIELD_INFO(CalibrateGyro, calibrate);
+    DECLARE_FIELD_INFO(GetAccelerometer, get_acc);
 #undef DECLARE_FIELD_INFO
 
 /**

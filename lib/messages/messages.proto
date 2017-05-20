@@ -11,6 +11,8 @@ message GetLogs {
 }
 message CalibrateGyro {
 }
+message GetAccelerometer {
+}
 
 message LinearPolicy {
   float k_bias     =  1; // constant bias
@@ -39,6 +41,7 @@ message PCMessage {
     Controller controller = 3;
     GetLogs get_logs = 4;
     CalibrateGyro calibrate = 5;
+    GetAccelerometer get_acc = 6;
   }
 }
 

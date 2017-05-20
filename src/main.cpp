@@ -274,7 +274,6 @@ void do_gyro_calibrate() {
   }
 }
 
-
 // set up the message handlers
 auto on_go = [](const Go& go) {
   // default to the maximum number of steps
@@ -343,6 +342,27 @@ auto on_calibrate = [](const CalibrateGyro& msg) {
     do_gyro_calibrate();
   }
 };
+auto on_get_acc = [](const GetAccelerometer& msg) {
+  if (mode == Mode::IDLE) {
+    auto acc = accelRead();
+    geometry::quat q = accelOrient(acc);
+    joint_angles j = q;
+    geometry::quat q2 = q;
+    q2.w = 0;
+    q2.normalize();
+    joint_angles j2 = q2;
+    // string formatting sucks in C
+    char msg[256];
+    snprintf(msg, sizeof(msg),
+      "Acc = [%f, %f, %f] m/s2\n"
+      "Yaw = %f, Pitch = %f, Roll = %f\n"
+      "Yaw = %f, Pitch = %f, Roll = %f",
+      acc.x, acc.y, acc.z,
+      j.psi, j.phi, j.theta,
+      j2.psi, j2.phi, j2.theta);
+    logging::info(msg);
+  }
+};
 
 // main function to setup the test
 void setup() {
@@ -354,6 +374,7 @@ void setup() {
   onMessage<Controller>(setPolicy);
   onMessage<GetLogs>(&on_get_logs);
   onMessage<CalibrateGyro>(&on_calibrate);
+  onMessage<GetAccelerometer>(&on_get_acc);
 
   pinMode(pins::LED, OUTPUT);
   digitalWrite(pins::LED, LOW);

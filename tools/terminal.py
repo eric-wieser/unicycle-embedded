@@ -58,6 +58,14 @@ def requires_connection(method):
         return method(self, *args, **kwargs)
     return wrapped
 
+def no_argument(method):
+    @functools.wraps(method)
+    def wrapped(self, arg):
+        if arg:
+            self.error('{} takes no arguments'.format(method.__name__))
+        return method(self, arg)
+    return wrapped
+
 
 class Commands(CommandBase):
 
@@ -287,6 +295,11 @@ class Commands(CommandBase):
         msg.calibrate.SetInParent()
         self.send(msg)
 
+    async def run_get_acc(self):
+        msg = messages_pb2.PCMessage()
+        msg.get_acc.SetInParent()
+        self.send(msg)
+
 
     # next come the command parsers
 
@@ -336,15 +349,13 @@ class Commands(CommandBase):
             await self.run_go()
 
     @requires_connection
+    @no_argument
     async def do_stop(self, arg):
         """
         Abort any active run. Takes no arguments
         ::
             stop
         """
-        if arg:
-            self.error("stop takes no argument")
-            return
         await self.run_stop()
 
     @requires_connection
@@ -361,16 +372,22 @@ class Commands(CommandBase):
         await self.run_policy(matfile=arg)
 
     @requires_connection
+    @no_argument
     async def do_calibrate(self, arg):
         """
         calibrate the gyro
         ::
             calibrate
         """
-        if arg:
-            self.error("calibrate takes no argument")
-            return
         await self.run_calibrate()
+
+    @requires_connection
+    @no_argument
+    async def do_acc(self, arg):
+        """
+        Get the accelerometer reading
+        """
+        await self.run_get_acc()
 
 def enable_win_unicode_console():
     if sys.version_info >= (3, 6):
