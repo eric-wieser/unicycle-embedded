@@ -12,9 +12,11 @@ struct euler_angles {
   float theta;
   float psi;
   euler_angles() {}
-  euler_angles(float phi, float theta, float psi)
+  constexpr euler_angles(float phi, float theta, float psi)
     : phi(phi), theta(theta), psi(psi) {}
   euler_angles(const quat &q);
+
+  operator quat() const;  // TODO
 };
 
 

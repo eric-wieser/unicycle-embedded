@@ -15,25 +15,6 @@
 
 namespace geometry {
 
-// a vector is equivalent to a quaternion with no real part
-quat::quat(Vector3<float> v) : quat(0, v.x, v.y, v.z) {}
-
-// a scalar is a quaternion with only a real part
-quat::quat(float k) : quat(k, 0, 0, 0) {}
-
-// mixed vector scalar constructor
-quat::quat(float k, Vector3<float> v) : quat(k, v.x, v.y, v.z) {}
-
-quat::quat(float xx, float yy, float zz, float ww)
-  : x(xx), y(yy), z(zz), w(ww)
-{
-}
-
-//quat::quat(float ww, float xx, float yy, float zz)
-//  : w(ww), x(xx), y(yy), z(zz)
-//{
-//}
-
 float quat::norm() const {
   return sqrt(x*x+y*y+z*z+w*w);
 }

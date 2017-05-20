@@ -16,15 +16,15 @@ public:
   T & operator [](int i) { return (&x)[i];}
 
   Vector3() {}
-  Vector3(T x, T y, T z) : x(x), y(y), z(z) {}
+  constexpr Vector3(T x, T y, T z) : x(x), y(y), z(z) {}
 
-  static Vector3<T> Zero() {
+  static constexpr Vector3<T> Zero() {
     return Vector3<T>(0, 0, 0);
   }
 
   // conversion to other scalar types
   template<typename U>
-  operator Vector3<U>() {
+  constexpr operator Vector3<U>() {
     return Vector3<U>(x, y, z);
   }
 

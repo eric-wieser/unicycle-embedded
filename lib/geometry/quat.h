@@ -9,10 +9,10 @@ class quat
 public:
   float x, y, z, w;
   quat() {};
-  quat(float xx, float yy, float zz, float ww);
-  quat(Vector3<float> v);
-  quat(float k);
-  quat(float k, Vector3<float> v);
+  constexpr quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+  constexpr quat(float k, Vector3<float> v) : quat(k, v.x, v.y, v.z) {}
+  constexpr quat(Vector3<float> v)          : quat(0, v.x, v.y, v.z) {}
+  constexpr quat(float k)                   : quat(k, 0, 0, 0) {}
 
   void normalize();
   quat conj() const;
