@@ -17,6 +17,7 @@ struct euler_angles {
 
   operator quat() const;
 
+  static quat remove_psi(const quat &q);
 };
 
 

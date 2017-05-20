@@ -103,16 +103,24 @@ Vector3<float> quat::v() const {
   return Vector3<float>(y, z, w);
 }
 
-quat quat::between(Vector3<float> a, Vector3<float> b) {
-  float len_ab = sqrt(a.squaredNorm() * b.squaredNorm());
-  auto scalar = dot(a, b) / len_ab;
-  auto vec = cross(a, b) / len_ab;
-  auto double_rotation = quat(scalar, vec);
 
-  // halfway between identity and what we calculated
-  auto q = (1 + double_rotation);
+quat quat::bisect(const quat &a, const quat &b) {
+  auto q = a + b;
   q.normalize();
   return q;
+}
+
+
+quat quat::between(Vector3<float> a, Vector3<float> b) {
+  float len_ab = sqrt(a.squaredNorm() * b.squaredNorm());
+  auto double_rotation = quat(dot(a, b), cross(a, b)) / len_ab;
+
+  // halfway between identity and what we calculated
+  return quat::bisect(1, double_rotation);
+}
+
+float arg(const quat &q) {
+  return acos(q.x / q.norm());
 }
 
 // https://math.stackexchange.com/q/1030737/1896

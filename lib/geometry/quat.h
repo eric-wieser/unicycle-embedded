@@ -25,6 +25,7 @@ public:
 
   Vector3<float> v() const;
 
+  static quat bisect(const quat &a, const quat &b);
   static quat between(Vector3<float> a, Vector3<float> b);
 };
 
@@ -34,5 +35,9 @@ inline quat operator *(quat q1, float f) { return q1 *= f; }
 inline quat operator *(float f, quat q1) { return q1 *= f; }
 inline quat operator /(quat q1, float f) { return q1 /= f; }
 
+// names match the standard library
+float arg(const quat &q);
+quat log(const quat &q);  // TODO?
 quat exp(const quat &q);
+
 }

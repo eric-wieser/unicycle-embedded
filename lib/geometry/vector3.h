@@ -57,6 +57,9 @@ public:
     z /= f;
     return *this;
   }
+  Vector3<T> operator-() const {
+    return Vector3<T>(-x, -y, -z);
+  }
 
   // other operations
   T squaredNorm() const {
@@ -82,9 +85,9 @@ T dot(Vector3<T> a, Vector3<T> b) {
 template<typename T>
 Vector3<T> cross(Vector3<T> a, Vector3<T> b) {
   return Vector3<T>(
-    a.y*b.z - b.y*a.z,
-    a.z*b.x - b.z*a.x,
-    a.x*b.y - b.x*a.y
+    a.y*b.z - a.z*b.y,
+    a.z*b.x - a.x*b.z,
+    a.x*b.y - a.y*b.x
   );
 }
 
