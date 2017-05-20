@@ -2,7 +2,7 @@
 #include "quat.h"
 #include "math.h"
 
-using namespace geometry;
+namespace geometry {
 
 // https://www.astro.rug.nl/software/kapteyn/_downloads/attitude.pdf#page=24
 template<>
@@ -47,3 +47,4 @@ euler_angles<213>::operator quat() const {
 		quat(cos(psi   / 2), 0,              0,              sin(psi / 2));
 }
 
+}

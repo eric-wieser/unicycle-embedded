@@ -19,6 +19,7 @@
 \endrst
 */
 #include "gyroAccel.h"
+#include "euler.h"
 #include "i2c_funcs.h"
 
 #include <Arduino.h>

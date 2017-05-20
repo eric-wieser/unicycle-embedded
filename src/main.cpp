@@ -320,6 +320,7 @@ auto on_go = [](const Go& go) {
 
   // enter the new mode
   mode = target;
+  state_tracker.q = accelOrient();
   ctrl_tmr.start();
   digitalWrite(pins::LED, HIGH);
 };
@@ -345,21 +346,19 @@ auto on_calibrate = [](const CalibrateGyro& msg) {
 auto on_get_acc = [](const GetAccelerometer& msg) {
   if (mode == Mode::IDLE) {
     auto acc = accelRead();
+    auto acc_unit = acc.normalized();
+
     geometry::quat q = accelOrient(acc);
     joint_angles j = q;
-    geometry::quat q2 = q;
-    q2.w = 0;
-    q2.normalize();
-    joint_angles j2 = q2;
-    // string formatting sucks in C
-    char msg[256];
+
+    char msg[512];
     snprintf(msg, sizeof(msg),
-      "Acc = [%f, %f, %f] m/s2\n"
-      "Yaw = %f, Pitch = %f, Roll = %f\n"
+      "Acc        = [%5.2f, %5.2f, %5.2f] m/s2\n"
+      "Normalized = [%5.2f, %5.2f, %5.2f] m/s2\n"
       "Yaw = %f, Pitch = %f, Roll = %f",
       acc.x, acc.y, acc.z,
-      j.psi, j.phi, j.theta,
-      j2.psi, j2.phi, j2.theta);
+      acc_unit.x, acc_unit.y, acc_unit.z,
+      j.psi, j.phi, j.theta);
     logging::info(msg);
   }
 };
