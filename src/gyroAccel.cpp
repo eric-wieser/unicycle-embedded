@@ -82,11 +82,9 @@ namespace {
   // in internal units, stored as float for extra precision
   Vector3<float> gyro_offset;
 
-  // measured by hanging the robot by a string upside down, and then negating
-  // this indicates the reading that should correpsond to balancing
-  const Vector3<float> acc_down = Vector3<float>(-0.85, -0.47, 9.90).normalized();
-
+  const Vector3<float> acc_down = Vector3<float>(1.304, 0.038, 10.12).normalized();
 }
+
 
 //! Initialize the connection to the accelerometer and gyro
 void gyroAccelSetup()
@@ -217,9 +215,11 @@ Vector3<float> gyroRead()
   return gyroRawToSI(gyroReadRaw() - gyro_offset);
 }
 
-
+//! Get the robot orientation based on the accelerometer reading. Only accurate
+//! when static
 quat accelOrient(Vector3<float> acc) {
-  return quat::between(acc, acc_down);
+  quat q = quat::between(acc, acc_down);
+  return euler_angles<213>::remove_psi(quat::between(acc, acc_down));
 }
 quat accelOrient() {
   return accelOrient(accelRead());
