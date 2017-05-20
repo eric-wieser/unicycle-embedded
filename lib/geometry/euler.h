@@ -1,9 +1,8 @@
 #pragma once
 
+#include "quat.h"
 
 namespace geometry {
-
-class quat;
 
 template<int order>
 struct euler_angles {
@@ -16,7 +15,8 @@ struct euler_angles {
     : phi(phi), theta(theta), psi(psi) {}
   euler_angles(const quat &q);
 
-  operator quat() const;  // TODO
+  operator quat() const;
+
 };
 
 
@@ -25,5 +25,9 @@ euler_angles<123>::euler_angles(const quat &q);
 
 template<>
 euler_angles<213>::euler_angles(const quat &q);
+
+template<>
+euler_angles<213>::operator quat() const;
+
 
 }

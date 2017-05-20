@@ -23,3 +23,11 @@ euler_angles<213>::euler_angles(const quat &q) {
   theta = asin(  2*z*w + 2*x*y);
   psi   = atan2(-2*y*z + 2*x*w, x*x -y*y +z*z -w*w);
 }
+
+template<>
+euler_angles<213>::operator quat() const {
+	return
+		quat(cos(phi   / 2), 0,              sin(phi   / 2), 0) *
+		quat(cos(theta / 2), sin(theta / 2), 0,              0) *
+		quat(cos(psi   / 2), 0,              0,              sin(psi / 2));
+}
