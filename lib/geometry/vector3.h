@@ -75,6 +75,21 @@ public:
 };
 
 template<typename T>
+T dot(Vector3<T> a, Vector3<T> b) {
+  return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+template<typename T>
+Vector3<T> cross(Vector3<T> a, Vector3<T> b) {
+  return Vector3<T>(
+    a.y*b.z - b.y*a.z,
+    a.z*b.x - b.z*a.x,
+    a.x*b.y - b.x*a.y
+  );
+}
+
+
+template<typename T>
 T declval() noexcept;
 
 template<typename T, typename U,

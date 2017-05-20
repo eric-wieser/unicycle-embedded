@@ -24,6 +24,8 @@ public:
   float norm() const;
 
   Vector3<float> v() const;
+
+  static quat between(Vector3<float> a, Vector3<float> b);
 };
 
 inline quat operator +(quat q1, const quat& q2) { return q1 += q2; }

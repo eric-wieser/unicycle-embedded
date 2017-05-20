@@ -103,6 +103,18 @@ Vector3<float> quat::v() const {
   return Vector3<float>(y, z, w);
 }
 
+quat quat::between(Vector3<float> a, Vector3<float> b) {
+  float len_ab = sqrt(a.squaredNorm() * b.squaredNorm());
+  auto scalar = dot(a, b) / len_ab;
+  auto vec = cross(a, b) / len_ab;
+  auto double_rotation = quat(scalar, vec);
+
+  // halfway between identity and what we calculated
+  auto q = (1 + double_rotation);
+  q.normalize();
+  return q;
+}
+
 // https://math.stackexchange.com/q/1030737/1896
 quat exp(const quat &q) {
   float n = q.y*q.y + q.z*q.z + q.w*q.w;
