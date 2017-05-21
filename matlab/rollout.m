@@ -13,7 +13,7 @@ if nargin < 6; verb = 0; end
   save_msg(ctrl_file, ctrl_msg);
 
   % load rollout data from robot
-  log_file = uigetfullfile('*.mat', 'Load rollout logs', logs_dir);
+  log_file = uigetfullfilemulti('*.mat', 'Load rollout logs', logs_dir);
   log_msg = load_msg(log_file);
   [z, u] = get_from_logs(log_msg, ctrl, plant);
 
@@ -56,10 +56,26 @@ end
 
 function f = uigetfullfile(varargin)
   [f, path] = uigetfile(varargin{:});
-  if f == 0
+  if isequal(f, 0)
     error('embedded:rollout:nofile', 'No file specified');
   end
   f = fullfile(path, f);
+end
+
+function f = uigetfullfilemulti(varargin)
+  % Select multiple files, queuing up extra files for later invocations
+  persistent last
+  if isempty(last)
+    last = uigetfullfile(varargin{:}, 'MultiSelect', 'on');
+    if ~iscell(last)
+      % 10/10 for api design, matlab - of course the user selecting a single
+      % variable should return a completely different data type...
+      last = {last}
+    end
+    fprintf('Queued %d log files for opening', length(last));
+  end
+  f = last{1};
+  last = last(2:end);
 end
 
 function f = uiputfullfile(varargin)
