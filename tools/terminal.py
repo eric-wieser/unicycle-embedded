@@ -303,6 +303,13 @@ class Commands(CommandBase):
         msg.get_acc.SetInParent()
         self.send(msg)
 
+    async def handle_eof(self):
+        if self.stream:
+            await self.run_disconnect()
+            self.info('Hit Ctrl+D again to exit')
+            return False
+        return True
+
 
     # next come the command parsers
 

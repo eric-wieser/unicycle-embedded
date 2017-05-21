@@ -68,13 +68,19 @@ class CommandBase:
             for c in self._commands:
                 print('  ' + c)
 
+    async def handle_eof(self):
+        return True
+
     async def loop(self, intro=None):
         while True:
             prompter = self._cli.run_async()
             try:
                 line = await prompter
             except EOFError:
-                break
+                if await self.handle_eof():
+                    break
+                else:
+                    continue
             if isinstance(line, Document):
                 line = line.text
 
