@@ -81,7 +81,10 @@ class Commands(CommandBase):
         self.log_queue = None
 
     def _log(self, level, text, robot=False):
-        tokens = [(level, str(text))]
+        text = str(text)
+        if '\n' in text:
+            text = ''.join('\n\t' + t for t in text.split('\n'))
+        tokens = [(level, text)]
         if robot:
             tokens = [(Token.Robot, 'remote: ')] + tokens
         self.print_tokens(tokens)
