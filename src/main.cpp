@@ -314,14 +314,28 @@ auto on_go = [](const Go& go) {
     logging::info("Request for bulk mode");
   }
 
-  play_starting_noise();
-  logging::info("Waiting for button press");
-  button::awaitPress();
+  while (button::isPressed());
+  while (true) {
+    logging::info("Waiting for button press");
+    while (!button::isPressed());
+    beep(NOTE_G7, 100);
+    delay(50);
+    beep(NOTE_G7, 100);
+    delay(50);
+    // releasing the button during the beep cancels the launch
+    if (!button::isPressed()) {
+      continue;
+    }
+    break;
+  }
+  // await the release
+  while (button::isPressed());
 
-  // enter the new mode
+  // enter the new mode, and begin
   mode = target;
   state_tracker.q = accelOrient();
   ctrl_tmr.start();
+
   digitalWrite(pins::LED, HIGH);
 };
 auto on_stop = [](const Stop& stop) {
