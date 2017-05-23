@@ -104,10 +104,10 @@ namespace {
  * \brief Set the speed of the turntable
  * 
  * \param  cmd  The fraction of maximum speed, in [-1 1]. Positive
- *              is counter-clockwise.
+ *              is counter-clockwise around the positive Z axis
  */
 void setMotorTurntable(float cmd) {
-  motor_turntable.set(cmd);
+  motor_turntable.set(-cmd);
 }
 
 /**

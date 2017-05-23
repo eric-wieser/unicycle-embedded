@@ -12,7 +12,7 @@ function pol = get_linear_policy(ctrl)
 
     pol.b = u_frame.zeros;
     pol.w = zE.pitch' .* uE.cw *  1 / deg2rad(15) ...
-          + zE.dyaw'  .* uE.ct * -1 / deg2rad(90);
+          + zE.dyaw'  .* uE.ct *  1 / deg2rad(90);
   else
     pol = ctrl.policy.p;
     if ~isfield(pol, 'b') || ~isfield(pol, 'w')
