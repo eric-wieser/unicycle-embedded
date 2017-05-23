@@ -13,6 +13,10 @@ message CalibrateGyro {
 }
 message GetAccelerometer {
 }
+message SetMotors {
+  float wheel = 1;
+  float turntable = 2;
+}
 
 message LinearPolicy {
   float k_bias     =  1; // constant bias
@@ -42,6 +46,7 @@ message PCMessage {
     GetLogs get_logs = 4;
     CalibrateGyro calibrate = 5;
     GetAccelerometer get_acc = 6;
+    SetMotors set_motors = 7;
   }
 }
 

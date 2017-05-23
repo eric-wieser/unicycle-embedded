@@ -376,6 +376,12 @@ auto on_get_acc = [](const GetAccelerometer& msg) {
     logging::info(msg);
   }
 };
+auto on_set_motors = [](const SetMotors& msg) {
+  if (mode == Mode::IDLE) {
+    setMotorTurntable(msg.turntable);
+    setMotorWheel(msg.wheel);
+  }
+};
 
 // main function to setup the test
 void setup() {
@@ -388,6 +394,7 @@ void setup() {
   onMessage<GetLogs>(&on_get_logs);
   onMessage<CalibrateGyro>(&on_calibrate);
   onMessage<GetAccelerometer>(&on_get_acc);
+  onMessage<SetMotors>(&on_set_motors);
 
   pinMode(pins::LED, OUTPUT);
   digitalWrite(pins::LED, LOW);

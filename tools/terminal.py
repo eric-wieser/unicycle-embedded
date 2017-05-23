@@ -303,6 +303,13 @@ class Commands(CommandBase):
         msg.get_acc.SetInParent()
         self.send(msg)
 
+    async def run_motor(self, wheel, turntable):
+        msg = messages_pb2.PCMessage()
+        msg.set_motors.SetInParent()
+        msg.set_motors.wheel = wheel
+        msg.set_motors.turntable = turntable
+        self.send(msg)
+
     async def handle_eof(self):
         if self.stream:
             await self.run_disconnect()
@@ -398,6 +405,29 @@ class Commands(CommandBase):
         Get the accelerometer reading
         """
         await self.run_get_acc()
+
+    async def do_motor(self, arg):
+        """
+        Set the motor speeds
+        ::
+            motor stop
+            motor <wheel> <tt>
+        """
+        if not arg:
+            self.error("argument required")
+        elif arg == 'stop':
+            wheel = 0
+            tt = 0
+        else:
+            p = arg.split(' ')
+            if len(p) != 2:
+                return self.error('Two arguments expected')
+            try:
+                wheel = float(p[0])
+                tt = float(p[1])
+            except ValueError:
+                return self.error('Arguments must be floats')
+        await self.run_motor(wheel, tt)
 
 def enable_win_unicode_console():
     if sys.version_info >= (3, 6):
