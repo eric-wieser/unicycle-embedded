@@ -21,17 +21,19 @@ env = DefaultEnvironment().Clone(tools=['protoc'])
 # Try to only add lines here, so that it works on all previous editor's PCS
 env.AppendENVPath('PATH', R'C:\software\nanopb-0.3.7-windows-x86\generator-bin')
 
-# configure build for arduino protobuf files
-target_nanopb = env.Protoc(
-    target=[],
-    source='messages.proto',
-    PROTOCNANOOUTDIR='${SOURCE.dir}'
-)
+for f in ['messages']:
+    # configure build for arduino protobuf files
+    target_nanopb = env.Protoc(
+        target=['{}.pb.h'.format(f)],
+        source='{}.proto'.format(f),
+        PROTOCNANOOUTDIR='${SOURCE.dir}'
+    )
 
-# configure build for python protobuf files
-target_python = env.Protoc(
-    target=[],
-    source='messages.proto',
-    PROTOCPYTHONOUTDIR='tools'
-)
+    # configure build for python protobuf files
+    target_python = env.Protoc(
+        target=[],
+        source='{}.proto'.format(f),
+        PROTOCPYTHONOUTDIR='tools'
+    )
+
 env.Alias('python', target_python)
