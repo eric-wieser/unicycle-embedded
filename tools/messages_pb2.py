@@ -14,14 +14,16 @@ from google.protobuf import descriptor_pb2
 _sym_db = _symbol_database.Default()
 
 
+import policies_pb2 as policies__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\x0f\n\rCalibrateGyro\"\x12\n\x10GetAccelerometer\"-\n\tSetMotors\x12\r\n\x05wheel\x18\x01 \x01(\x02\x12\x11\n\tturntable\x18\x02 \x01(\x02\"\xce\x01\n\x0cLinearPolicy\x12\x0e\n\x06k_bias\x18\x01 \x01(\x02\x12\x0f\n\x07k_droll\x18\x02 \x01(\x02\x12\x0e\n\x06k_dyaw\x18\x03 \x01(\x02\x12\x11\n\tk_dAngleW\x18\x04 \x01(\x02\x12\x10\n\x08k_dpitch\x18\x05 \x01(\x02\x12\x12\n\nk_dAngleTT\x18\x06 \x01(\x02\x12\x11\n\tk_xOrigin\x18\x07 \x01(\x02\x12\x11\n\tk_yOrigin\x18\x08 \x01(\x02\x12\x0e\n\x06k_roll\x18\t \x01(\x02\x12\r\n\x05k_yaw\x18\n \x01(\x02\x12\x0f\n\x07k_pitch\x18\x0b \x01(\x02\"L\n\nController\x12\x1c\n\x05wheel\x18\x01 \x01(\x0b\x32\r.LinearPolicy\x12 \n\tturntable\x18\x02 \x01(\x0b\x32\r.LinearPolicy\"\xea\x01\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12!\n\ncontroller\x18\x03 \x01(\x0b\x32\x0b.ControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x12#\n\tcalibrate\x18\x05 \x01(\x0b\x32\x0e.CalibrateGyroH\x00\x12$\n\x07get_acc\x18\x06 \x01(\x0b\x32\x11.GetAccelerometerH\x00\x12 \n\nset_motors\x18\x07 \x01(\x0b\x32\n.SetMotorsH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"5\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\x12\x1a\n\x05level\x18\x02 \x01(\x0e\x32\x0b.DebugLevel\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msg*6\n\nDebugLevel\x12\t\n\x05\x44\x45\x42UG\x10\x00\x12\x08\n\x04INFO\x10\x01\x12\x08\n\x04WARN\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x62\x06proto3')
-)
+  serialized_pb=_b('\n\x0emessages.proto\x1a\x0epolicies.proto\"\x13\n\x02Go\x12\r\n\x05steps\x18\x01 \x01(\x05\"\x06\n\x04Stop\"\t\n\x07GetLogs\"\x0f\n\rCalibrateGyro\"\x12\n\x10GetAccelerometer\"-\n\tSetMotors\x12\r\n\x05wheel\x18\x01 \x01(\x02\x12\x11\n\tturntable\x18\x02 \x01(\x02\"@\n\nController\x12\x16\n\x05wheel\x18\x01 \x01(\x0b\x32\x07.Policy\x12\x1a\n\tturntable\x18\x02 \x01(\x0b\x32\x07.Policy\"\xea\x01\n\tPCMessage\x12\x11\n\x02go\x18\x01 \x01(\x0b\x32\x03.GoH\x00\x12\x15\n\x04stop\x18\x02 \x01(\x0b\x32\x05.StopH\x00\x12!\n\ncontroller\x18\x03 \x01(\x0b\x32\x0b.ControllerH\x00\x12\x1c\n\x08get_logs\x18\x04 \x01(\x0b\x32\x08.GetLogsH\x00\x12#\n\tcalibrate\x18\x05 \x01(\x0b\x32\x0e.CalibrateGyroH\x00\x12$\n\x07get_acc\x18\x06 \x01(\x0b\x32\x11.GetAccelerometerH\x00\x12 \n\nset_motors\x18\x07 \x01(\x0b\x32\n.SetMotorsH\x00\x42\x05\n\x03msg\"\xb0\x02\n\x08LogEntry\x12\r\n\x05\x64roll\x18\x01 \x01(\x02\x12\x0c\n\x04\x64yaw\x18\x02 \x01(\x02\x12\x0f\n\x07\x64\x41ngleW\x18\x03 \x01(\x02\x12\x0e\n\x06\x64pitch\x18\x04 \x01(\x02\x12\x10\n\x08\x64\x41ngleTT\x18\x05 \x01(\x02\x12\x0f\n\x07xOrigin\x18\x06 \x01(\x02\x12\x0f\n\x07yOrigin\x18\x07 \x01(\x02\x12\x0c\n\x04roll\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\x12\r\n\x05pitch\x18\n \x01(\x02\x12\t\n\x01x\x18\x0f \x01(\x02\x12\t\n\x01y\x18\x10 \x01(\x02\x12\x0e\n\x06\x41ngleW\x18\x11 \x01(\x02\x12\x0f\n\x07\x41ngleTT\x18\x12 \x01(\x02\x12\x16\n\x0eTurntableInput\x18\x13 \x01(\x02\x12\x12\n\nWheelInput\x18\x14 \x01(\x02\x12\x0b\n\x03\x64\x64x\x18\x15 \x01(\x02\x12\x0b\n\x03\x64\x64y\x18\x16 \x01(\x02\x12\x0b\n\x03\x64\x64z\x18\x17 \x01(\x02\"%\n\tLogBundle\x12\x18\n\x05\x65ntry\x18\x01 \x03(\x0b\x32\t.LogEntry\"5\n\x0c\x44\x65\x62ugMessage\x12\t\n\x01s\x18\x01 \x01(\t\x12\x1a\n\x05level\x18\x02 \x01(\x0e\x32\x0b.DebugLevel\"x\n\x0cRobotMessage\x12 \n\nlog_bundle\x18\x01 \x01(\x0b\x32\n.LogBundleH\x00\x12\x1e\n\x05\x64\x65\x62ug\x18\x02 \x01(\x0b\x32\r.DebugMessageH\x00\x12\x1f\n\nsingle_log\x18\x03 \x01(\x0b\x32\t.LogEntryH\x00\x42\x05\n\x03msg*6\n\nDebugLevel\x12\t\n\x05\x44\x45\x42UG\x10\x00\x12\x08\n\x04INFO\x10\x01\x12\x08\n\x04WARN\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x62\x06proto3')
+  ,
+  dependencies=[policies__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _DEBUGLEVEL = _descriptor.EnumDescriptor(
@@ -49,8 +51,8 @@ _DEBUGLEVEL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1189,
-  serialized_end=1243,
+  serialized_start=984,
+  serialized_end=1038,
 )
 _sym_db.RegisterEnumDescriptor(_DEBUGLEVEL)
 
@@ -88,8 +90,8 @@ _GO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=18,
-  serialized_end=37,
+  serialized_start=34,
+  serialized_end=53,
 )
 
 
@@ -112,8 +114,8 @@ _STOP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=39,
-  serialized_end=45,
+  serialized_start=55,
+  serialized_end=61,
 )
 
 
@@ -136,8 +138,8 @@ _GETLOGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=47,
-  serialized_end=56,
+  serialized_start=63,
+  serialized_end=72,
 )
 
 
@@ -160,8 +162,8 @@ _CALIBRATEGYRO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=58,
-  serialized_end=73,
+  serialized_start=74,
+  serialized_end=89,
 )
 
 
@@ -184,8 +186,8 @@ _GETACCELEROMETER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=75,
-  serialized_end=93,
+  serialized_start=91,
+  serialized_end=109,
 )
 
 
@@ -222,109 +224,8 @@ _SETMOTORS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=95,
-  serialized_end=140,
-)
-
-
-_LINEARPOLICY = _descriptor.Descriptor(
-  name='LinearPolicy',
-  full_name='LinearPolicy',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='k_bias', full_name='LinearPolicy.k_bias', index=0,
-      number=1, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_droll', full_name='LinearPolicy.k_droll', index=1,
-      number=2, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_dyaw', full_name='LinearPolicy.k_dyaw', index=2,
-      number=3, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_dAngleW', full_name='LinearPolicy.k_dAngleW', index=3,
-      number=4, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_dpitch', full_name='LinearPolicy.k_dpitch', index=4,
-      number=5, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_dAngleTT', full_name='LinearPolicy.k_dAngleTT', index=5,
-      number=6, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_xOrigin', full_name='LinearPolicy.k_xOrigin', index=6,
-      number=7, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_yOrigin', full_name='LinearPolicy.k_yOrigin', index=7,
-      number=8, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_roll', full_name='LinearPolicy.k_roll', index=8,
-      number=9, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_yaw', full_name='LinearPolicy.k_yaw', index=9,
-      number=10, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='k_pitch', full_name='LinearPolicy.k_pitch', index=10,
-      number=11, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=143,
-  serialized_end=349,
+  serialized_start=111,
+  serialized_end=156,
 )
 
 
@@ -361,8 +262,8 @@ _CONTROLLER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=351,
-  serialized_end=427,
+  serialized_start=158,
+  serialized_end=222,
 )
 
 
@@ -437,8 +338,8 @@ _PCMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='PCMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=430,
-  serialized_end=664,
+  serialized_start=225,
+  serialized_end=459,
 )
 
 
@@ -594,8 +495,8 @@ _LOGENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=667,
-  serialized_end=971,
+  serialized_start=462,
+  serialized_end=766,
 )
 
 
@@ -625,8 +526,8 @@ _LOGBUNDLE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=973,
-  serialized_end=1010,
+  serialized_start=768,
+  serialized_end=805,
 )
 
 
@@ -663,8 +564,8 @@ _DEBUGMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1012,
-  serialized_end=1065,
+  serialized_start=807,
+  serialized_end=860,
 )
 
 
@@ -711,12 +612,12 @@ _ROBOTMESSAGE = _descriptor.Descriptor(
       name='msg', full_name='RobotMessage.msg',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=1067,
-  serialized_end=1187,
+  serialized_start=862,
+  serialized_end=982,
 )
 
-_CONTROLLER.fields_by_name['wheel'].message_type = _LINEARPOLICY
-_CONTROLLER.fields_by_name['turntable'].message_type = _LINEARPOLICY
+_CONTROLLER.fields_by_name['wheel'].message_type = policies__pb2._POLICY
+_CONTROLLER.fields_by_name['turntable'].message_type = policies__pb2._POLICY
 _PCMESSAGE.fields_by_name['go'].message_type = _GO
 _PCMESSAGE.fields_by_name['stop'].message_type = _STOP
 _PCMESSAGE.fields_by_name['controller'].message_type = _CONTROLLER
@@ -765,7 +666,6 @@ DESCRIPTOR.message_types_by_name['GetLogs'] = _GETLOGS
 DESCRIPTOR.message_types_by_name['CalibrateGyro'] = _CALIBRATEGYRO
 DESCRIPTOR.message_types_by_name['GetAccelerometer'] = _GETACCELEROMETER
 DESCRIPTOR.message_types_by_name['SetMotors'] = _SETMOTORS
-DESCRIPTOR.message_types_by_name['LinearPolicy'] = _LINEARPOLICY
 DESCRIPTOR.message_types_by_name['Controller'] = _CONTROLLER
 DESCRIPTOR.message_types_by_name['PCMessage'] = _PCMESSAGE
 DESCRIPTOR.message_types_by_name['LogEntry'] = _LOGENTRY
@@ -815,13 +715,6 @@ SetMotors = _reflection.GeneratedProtocolMessageType('SetMotors', (_message.Mess
   # @@protoc_insertion_point(class_scope:SetMotors)
   ))
 _sym_db.RegisterMessage(SetMotors)
-
-LinearPolicy = _reflection.GeneratedProtocolMessageType('LinearPolicy', (_message.Message,), dict(
-  DESCRIPTOR = _LINEARPOLICY,
-  __module__ = 'messages_pb2'
-  # @@protoc_insertion_point(class_scope:LinearPolicy)
-  ))
-_sym_db.RegisterMessage(LinearPolicy)
 
 Controller = _reflection.GeneratedProtocolMessageType('Controller', (_message.Message,), dict(
   DESCRIPTOR = _CONTROLLER,

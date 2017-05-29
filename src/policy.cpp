@@ -11,48 +11,72 @@ namespace {
 	//! pointers to the fields that our controller takes as input
 	struct field_pair {
 		float LogEntry::* state;
-		float LinearPolicy::* policy;
-		operator bool() const { return state != nullptr || policy != nullptr; }
+		float LinearPolicy::* lin_field;
+		LinearPolicy PureQuadraticPolicy::* quad_field;
+		operator bool() const {
+			return state != nullptr || lin_field != nullptr || quad_field != nullptr;
+		}
 	};
 
 	//! List of state fields and their corresponding controller field
 	//! Null-terminated
 	const field_pair fields[] = {
-		{&LogEntry::droll,    &LinearPolicy::k_droll},
-		{&LogEntry::dyaw,     &LinearPolicy::k_dyaw},
-		{&LogEntry::dAngleW,  &LinearPolicy::k_dAngleW},
-		{&LogEntry::dpitch,   &LinearPolicy::k_dpitch},
-		{&LogEntry::dAngleTT, &LinearPolicy::k_dAngleTT},
-		{&LogEntry::xOrigin,  &LinearPolicy::k_xOrigin},
-		{&LogEntry::yOrigin,  &LinearPolicy::k_yOrigin},
-		{&LogEntry::roll,     &LinearPolicy::k_roll},
-		{&LogEntry::yaw,      &LinearPolicy::k_yaw},
-		{&LogEntry::pitch,    &LinearPolicy::k_pitch},
-		{nullptr, nullptr}
+		{&LogEntry::droll,    &LinearPolicy::k_droll,    &PureQuadraticPolicy::k_droll},
+		{&LogEntry::dyaw,     &LinearPolicy::k_dyaw,     &PureQuadraticPolicy::k_dyaw},
+		{&LogEntry::dAngleW,  &LinearPolicy::k_dAngleW,  &PureQuadraticPolicy::k_dAngleW},
+		{&LogEntry::dpitch,   &LinearPolicy::k_dpitch,   &PureQuadraticPolicy::k_dpitch},
+		{&LogEntry::dAngleTT, &LinearPolicy::k_dAngleTT, &PureQuadraticPolicy::k_dAngleTT},
+		{&LogEntry::xOrigin,  &LinearPolicy::k_xOrigin,  &PureQuadraticPolicy::k_xOrigin},
+		{&LogEntry::yOrigin,  &LinearPolicy::k_yOrigin,  &PureQuadraticPolicy::k_yOrigin},
+		{&LogEntry::roll,     &LinearPolicy::k_roll,     &PureQuadraticPolicy::k_roll},
+		{&LogEntry::yaw,      &LinearPolicy::k_yaw,      &PureQuadraticPolicy::k_yaw},
+		{&LogEntry::pitch,    &LinearPolicy::k_pitch,    &PureQuadraticPolicy::k_pitch},
+		{nullptr, nullptr, nullptr}
 	};
 
 	//! compute the policy output for a given policy and state
 	float computePolicy(const LinearPolicy& policy, const LogEntry& state) {
-		float result = policy.k_bias;
-
-		// iterate over the pairs of members defined in fields
+		// dot product over the pairs of members defined in fields
+		float result = 0;
 		for(const field_pair* fp = fields; *fp; fp++) {
-			result += policy.*(fp->policy) * state.*(fp->state);
+			result += policy.*(fp->lin_field) * state.*(fp->state);
 		}
 		return result;
 	}
+	float computePolicy(const PureQuadraticPolicy& policy, const LogEntry& state) {
+		// note that we define this in terms of a sum over linear policies
+		// weighted by state
+		float result = 0;
+		for(const field_pair* fp = fields; *fp; fp++) {
+			result += computePolicy(policy.*(fp->quad_field), state) * state.*(fp->state);
+		}
+		return result;
+	}
+	float computePolicy(const AffinePolicy& policy, const LogEntry& state) {
+		return policy.k_bias
+			+ computePolicy(policy.k_lin, state);
+	}
+	float computePolicy(const QuadraticPolicy& policy, const LogEntry& state) {
+		return policy.k_bias
+			+ computePolicy(policy.k_lin, state)
+			+ computePolicy(policy.k_quad, state);
+	}
+
+	//! Dispatch from a generic policy to a specific one
+	float computePolicy(const Policy& policy, const LogEntry& state) {
+		switch (policy.which_msg) {
+			case Policy_lin_tag:    return computePolicy(policy.msg.lin, state);
+			case Policy_affine_tag: return computePolicy(policy.msg.affine, state);
+			case Policy_quad_tag:   return computePolicy(policy.msg.quad, state);
+			default:                return 0;
+		}
+	}
 
 	//! Turntable policy
-	LinearPolicy policyTTParams = { 0 };
-		// 0.13994,
-		// 2.56325, -0.02692, 0.02074, 0.06003, -0.00312, 1.61079, -2.93646, 11.57684, -0.05651, 0.53147
-	// };
+	Policy policyTTParams = { 0 };
 
 	//! Wheel policy
-	LinearPolicy policyWheelParams = { 0 };
-		// 0.02970,
-		// 0.04465, -0.01305, 0.02915, 0.43688, 0.00171, -0.56873, -0.62321, 0.15515, -0.01179, 1.00638
-	// };
+	Policy policyWheelParams = { 0 };
 }
 
 //! Set the policy from an incoming message

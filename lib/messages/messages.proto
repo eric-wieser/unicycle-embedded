@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "policies.proto";
 
 // Messages from PC to robot:
 message Go {
@@ -18,24 +19,10 @@ message SetMotors {
   float turntable = 2;
 }
 
-message LinearPolicy {
-  float k_bias     =  1; // constant bias
-
-  float k_droll    =  2; // linear scale factors for each state
-  float k_dyaw     =  3;
-  float k_dAngleW  =  4;
-  float k_dpitch   =  5;
-  float k_dAngleTT =  6;
-  float k_xOrigin  =  7;
-  float k_yOrigin  =  8;
-  float k_roll     =  9;
-  float k_yaw      = 10;
-  float k_pitch    = 11;
-}
 
 message Controller {
-  LinearPolicy wheel = 1;
-  LinearPolicy turntable = 2;
+  Policy wheel = 1;
+  Policy turntable = 2;
 }
 
 message PCMessage {

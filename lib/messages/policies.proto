@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+// LinearPolicy(u) = \sum k_i x_i
+message LinearPolicy {
+  // scalar scale factors for each state
+  float k_droll    =  1; 
+  float k_dyaw     =  2;
+  float k_dAngleW  =  3;
+  float k_dpitch   =  4;
+  float k_dAngleTT =  5;
+  float k_xOrigin  =  6;
+  float k_yOrigin  =  7;
+  float k_roll     =  8;
+  float k_yaw      =  9;
+  float k_pitch    = 10;
+}
+
+// PureQuadraticPolicy(u) = \sum_ij x_i Q_ij x_j
+//                        = \sum_i x_i k_i(x)
+//
+// Note that in the matlab, we represent this as just the upper triangle of Q
+message PureQuadraticPolicy {
+  // linear scale factors for each state
+  LinearPolicy k_droll    =  1;
+  LinearPolicy k_dyaw     =  2;
+  LinearPolicy k_dAngleW  =  3;
+  LinearPolicy k_dpitch   =  4;
+  LinearPolicy k_dAngleTT =  5;
+  LinearPolicy k_xOrigin  =  6;
+  LinearPolicy k_yOrigin  =  7;
+  LinearPolicy k_roll     =  8;
+  LinearPolicy k_yaw      =  9;
+  LinearPolicy k_pitch    = 10;
+}
+
+// u = k_bias + k_lin(u)
+message AffinePolicy {
+  float        k_bias = 1; // constant bias
+  LinearPolicy k_lin  = 2;
+}
+
+// u = k_bias + k_lin(u) + k_quad(u)
+message QuadraticPolicy {
+  float               k_bias = 1; // constant bias
+  LinearPolicy        k_lin  = 2;
+  PureQuadraticPolicy k_quad = 3;
+}
+
+// union of the above types - add more if new controller types exist
+message Policy {
+  oneof msg {
+    LinearPolicy lin = 1;
+    AffinePolicy affine = 2;
+    QuadraticPolicy quad = 3;
+  }
+}

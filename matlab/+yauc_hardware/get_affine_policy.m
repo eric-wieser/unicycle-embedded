@@ -1,5 +1,5 @@
-function pol = get_linear_policy(ctrl)
-  %% Produce a linear policy from the given controller
+function pol = get_affine_policy(ctrl)
+  %% Produce an affine policy from the given controller
   % We assume that there is a @gSat term that means the policy aims to produce
   % control outputs in [-1, 1]
   z_frame = ctrl.in_frame;
