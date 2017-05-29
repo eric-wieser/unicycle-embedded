@@ -6,7 +6,7 @@ function f = getfullfilemulti(varargin)
     if ~iscell(last)
       % 10/10 for api design, matlab - of course the user selecting a single
       % variable should return a completely different data type...
-      last = {last}
+      last = {last};
     end
     fprintf('Queued %d log files for opening', length(last));
   end
