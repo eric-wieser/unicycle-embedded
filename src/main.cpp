@@ -297,7 +297,6 @@ auto on_go = [](const Go& go) {
   state_tracker = StateTracker();
   phase = LoopPhase::PRE;
 
-  resetEncoders();
 
   // compute the new mode
   Mode target;
@@ -333,6 +332,7 @@ auto on_go = [](const Go& go) {
 
   // enter the new mode, and begin
   mode = target;
+  resetEncoders();
   state_tracker.q = accelOrient();
   ctrl_tmr.start();
 
