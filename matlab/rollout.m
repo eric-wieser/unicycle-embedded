@@ -35,7 +35,18 @@ function traj = rollout(start, ctrl, H, plant, cost, verb)
   traj.dt = plant.dt;
 
   % TODO: make this optional - full results are useful
-  traj = apply_constraints(traj, plant, verb);
+  traj_c = apply_constraints(traj, plant, verb);
+
+  if size(traj_c.observed, 2) ~= 0
+    traj = traj_c;
+    return
+  end
+
+  warning('Trajectory was empty');
+  keyboard;
+
+  % try again
+  traj = rollout(start, ctrl, H, plant, cost, verb);
 end
 
 function traj = apply_constraints(traj, plant, verb)
@@ -54,9 +65,9 @@ function traj = apply_constraints(traj, plant, verb)
     end
   end
 
-  traj.observed = traj.observed(:,1:H+1);
-  traj.latent   = traj.latent(:,1:H+1);
-  traj.action   = traj.action(:,1:H);  % actions happen between states, so are one shorter
-  traj.loss     = traj.loss(:,1:H+1);
+  traj.observed = traj.observed(:,1:H);
+  traj.latent   = traj.latent(:,1:H);
+  traj.action   = traj.action(:,1:H-1);  % actions happen between states, so are one shorter
+  traj.loss     = traj.loss(:,1:H);
 end
 
