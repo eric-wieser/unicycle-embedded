@@ -95,7 +95,7 @@ class Commands(CommandBase):
     async def loop(self):
         print("Yaw Actuated UniCycle command line interface")
 
-        await self.run_connect()
+        await self.do_connect('')
         try:
             return await super().loop()
         finally:
