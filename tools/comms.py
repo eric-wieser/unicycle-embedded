@@ -8,8 +8,9 @@ from google.protobuf.message import DecodeError
 from serial import SerialException
 
 import messages_pb2
-
-SERIAL_NO = 'A5004HJMA'  # serial number of the microchip, used to find COm port
+# serial number of the microchip, used to find COm port
+# One of these is for mac, the other for windows
+SERIAL_NOS = ['A5004Hjm', 'A5004HJMA']
 BAUD_RATE = 57600
 
 class StreamWrapper:
@@ -93,12 +94,12 @@ class ProtobufStream(StreamWrapper):
         self._conn.write_packet(msg.SerializeToString())
 
 
-def connect(serial_no=SERIAL_NO, baud=BAUD_RATE) -> AsyncSerial:
+def connect(serial_nos=SERIAL_NOS, baud=BAUD_RATE) -> AsyncSerial:
     try:
         arduino_port = next(
             p.device
             for p in serial.tools.list_ports.comports()
-            if p.serial_number == serial_no
+            if p.serial_number in serial_nos
         )
     except StopIteration:
         raise NoArduinoFound from None
