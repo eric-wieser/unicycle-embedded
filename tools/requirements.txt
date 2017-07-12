@@ -7,3 +7,4 @@ cobs ~= 1.0      # this is a little tricky to install on windows
 numpy
 scipy
 prompt-toolkit ~= 1.0
+pygments
